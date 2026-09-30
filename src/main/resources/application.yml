@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: grantfit
+
+  # 로컬 개발용 환경변수를 .env 파일에서 읽는다.
+  # 파일이 없으면 무시하고 OS 환경변수를 사용한다. (운영/CI 대응)
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: grantfit-pool
+      maximum-pool-size: 10
+      connection-timeout: 5000
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.grantfit
+  configuration:
+    map-underscore-to-camel-case: true
+    jdbc-type-for-null: NULL
+
+logging:
+  level:
+    com.grantfit: DEBUG
