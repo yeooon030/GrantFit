@@ -3,6 +3,7 @@ package com.grantfit.program;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +74,48 @@ class SupportProgramMapperTest {
 		assertThat(second.applicationEnd()).isEqualTo(LocalDate.of(2026, 11, 30));
 		assertThat(second.originalUrl()).isEqualTo("https://www.bizinfo.go.kr/test2");
 		assertThat(second.rawContent()).contains("\"v\":2");
+	}
+
+	@Test
+	void 목록은_마감된_공고를_빼고_마감일순_신청기간_없는_공고는_뒤로() {
+		// 실제 수집 데이터와 겹치지 않도록 기준일을 먼 미래로 둔다.
+		// 기준일 이전에 마감된 실제 공고는 모두 빠지고, 신청기간 없는 실제 공고만 함께 조회된다.
+		LocalDate today = LocalDate.of(2099, 1, 1);
+		long before = supportProgramMapper.countOpen(today);
+
+		supportProgramMapper.upsert(row("TEST_LIST_LATE", LocalDate.of(2099, 1, 10)));
+		supportProgramMapper.upsert(row("TEST_LIST_SOON", LocalDate.of(2099, 1, 5)));
+		supportProgramMapper.upsert(row("TEST_LIST_TODAY", today));
+		supportProgramMapper.upsert(row("TEST_LIST_CLOSED", LocalDate.of(2098, 12, 31)));
+		supportProgramMapper.upsert(row("TEST_LIST_ALWAYS", null));
+
+		List<SupportProgramSummary> list = supportProgramMapper.selectOpenList(today, 100, 0);
+
+		assertThat(supportProgramMapper.countOpen(today)).isEqualTo(before + 4);
+		assertThat(list).extracting(SupportProgramSummary::title)
+				.startsWith("TEST_LIST_TODAY", "TEST_LIST_SOON", "TEST_LIST_LATE", "TEST_LIST_ALWAYS")
+				.doesNotContain("TEST_LIST_CLOSED");
+		assertThat(list.subList(3, list.size())).allMatch(p -> p.applicationEnd() == null);
+	}
+
+	@Test
+	void 목록_페이지는_limit과_offset을_따른다() {
+		LocalDate today = LocalDate.of(2099, 1, 1);
+		supportProgramMapper.upsert(row("TEST_PAGE_1", LocalDate.of(2099, 1, 2)));
+		supportProgramMapper.upsert(row("TEST_PAGE_2", LocalDate.of(2099, 1, 3)));
+		supportProgramMapper.upsert(row("TEST_PAGE_3", LocalDate.of(2099, 1, 4)));
+
+		assertThat(supportProgramMapper.selectOpenList(today, 2, 0))
+				.extracting(SupportProgramSummary::title).containsExactly("TEST_PAGE_1", "TEST_PAGE_2");
+		assertThat(supportProgramMapper.selectOpenList(today, 2, 2))
+				.extracting(SupportProgramSummary::title).first().isEqualTo("TEST_PAGE_3");
+	}
+
+	private SupportProgram row(String externalId, LocalDate end) {
+		return new SupportProgram(
+				null, externalId, externalId, "테스트기관", null, "중소기업",
+				end == null ? null : end.minusDays(30), end, null, "https://www.bizinfo.go.kr/test",
+				"{}", null, null);
 	}
 
 	private SupportProgram sample(LocalDate start, LocalDate end) {

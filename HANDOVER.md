@@ -15,7 +15,7 @@
 - [x] 지원사업 DB 스키마(DDL) 작성 및 적용
 - [x] 공공 API 연동
 - [x] 지원사업 DB 저장 (50건, external_id UPSERT)
-- [ ] 지원사업 조회 API
+- [x] 지원사업 목록 API (상세 API는 미착수)
 - [ ] Vue 목록/상세 화면
 - [ ] Gemini API 연동
 - [ ] AI Structured Output
@@ -28,12 +28,11 @@
 - [ ] README 정리
 - [ ] 최종 테스트
 
-현재 Milestone: MILESTONE 1 (README §28) — 목록 API만 남음
+현재 Milestone: MILESTONE 1 (README §28) 완료 → 다음은 MILESTONE 2 (공고 1건 AI 분석)
 
 현재 작업:
 
-기업마당 API 연동, DB 저장, 중복 처리(UPSERT) 완료. 실제 공고 50건 저장.
-남은 것은 목록 API 하나다.
+MILESTONE 1 완료 기준 5개(API 호출, DTO 변환, DB 저장, 중복 처리, 목록 API) 모두 충족.
 
 현재 브랜치:
 
@@ -44,8 +43,10 @@ main
 커밋 상태:
 
 ```
-cff8d3b GrantFit 초기 프로젝트 구성      (origin/main 푸시됨)
-+ MILESTONE 1 수집 커밋 1개              (로컬, 미푸시)
+cff8d3b GrantFit 초기 프로젝트 구성
+fb9048c 기업마당 지원사업 API 수집 및 support_program UPSERT 구현
++ MILESTONE 1 목록 API 커밋
+모두 origin/main 푸시
 ```
 
 ---
@@ -106,8 +107,25 @@ GET https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do
 - 50건 재수집 → `updated 50`, 행 수 변화 없음
 - 인증키가 로그·테스트 리포트에 남지 않음 확인
 
+### 목록 API (2026-10-17)
+
+```
+GET /api/support-programs?page=0&size=20
+→ {"items":[...], "page":0, "size":20, "totalCount":50}
+```
+
+- 마감되지 않은 공고만 (`application_end IS NULL OR >= 오늘`)
+- 정렬: `application_end ASC NULLS LAST, id DESC`
+- 오늘 = **KST 기준, Java에서 계산해 전달**. DB timezone 이 UTC 라 `current_date` 를 쓰지 않는다
+- `raw_content` 는 목록 응답에서 제외
+- `page < 0`, `size` 1~100 밖이면 400
+
+실제 50건 호출로 정렬·페이징 확인. 마감된 공고 제외는 실제 데이터에 마감 공고가 없어 Mapper 테스트로만 확인.
+
 ### 결정사항
 
+- 목록 기본 정렬은 마감일순, `announced_at` 컬럼은 추가하지 않음 (ISSUE-004 종료)
+- `region` 은 이번에 보류, 목록 응답엔 null 로 노출 (ISSUE-003 유지)
 - README §7 "수정일" 유지 (`updtPnttm` 존재)
 - 날짜가 아닌 신청기간은 NULL, 원문은 raw_content
 - `raw_content` 는 item JSON 원본 그대로
@@ -119,11 +137,11 @@ GET https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do
 
 현재 작업:
 
-없음 (MILESTONE 1 목록 API 착수 전)
+없음 (MILESTONE 1 완료, MILESTONE 2 착수 전)
 
 상태:
 
-실제 공고 50건이 `support_program` 에 저장되어 있다.
+실제 공고 50건이 `support_program` 에 저장되어 있고 목록 API로 조회된다.
 
 관련 파일:
 
@@ -213,29 +231,38 @@ API에 해당 필드가 없고, README §3상 AI 추출 대상이다.
 
 다음 작업:
 
-목록 API 단계에서 `announced_at` 과 함께 결정한다.
+목록 API 단계에서 보류로 결정했다. 목록 응답의 region 은 null.
+MILESTONE 2 AI 분석 결과 구조를 본 뒤 1/2/3안 중 결정한다.
+지역 필터는 MILESTONE 8 UI 범위다.
 
 ---
 
-### ISSUE-004
+### ISSUE-004 (종료)
+
+`announced_at` 컬럼은 추가하지 않는다. 목록은 마감일순으로 정렬한다.
+공고 등록일 정렬이 필요해지면 raw_content 의 `creatPnttm` 으로 백필한다.
+
+---
+
+### ISSUE-005
 
 문제:
 
-`announced_at`(공고 등록일, `creatPnttm`) 컬럼이 없다.
-`created_at` 은 DB 적재 시각이라 첫 수집 50건이 거의 같은 값이다.
-"최신 공고순" 정렬 기준이 없다.
+숫자가 아닌 page/size(`page=abc`)는 400 이지만 메시지가 `For input string: "abc"` 로 노출된다.
 
 다음 작업:
 
-목록 API 단계에서 컬럼 추가 여부를 결정한다. raw_content 에 보존되어 있어 백필 가능.
+전역 예외 처리(MILESTONE 3 실패 처리)를 만들 때 함께 정리한다.
 
 ---
 
 ## 5. 다음 세션 작업
 
-1. 목록 API 설계 — ISSUE-003(region), ISSUE-004(announced_at) 결정
-2. `GET /api/support-programs` 목록 API 구현 → MILESTONE 1 완료
-3. MILESTONE 1 완료 커밋 후 푸시
+MILESTONE 2 — 공고 1건 AI 분석 (README §28)
+
+1. Gemini API 키 발급 및 Structured Output / JSON Schema 스펙 확인 (실제 호출로)
+2. 공고 1건 AI 입력 구성 (raw_content 의 pblancNm, bsnsSumryCn(HTML 정리), trgetNm, reqstBeginEndDe, reqstMthPapersCn)
+3. `POST /api/support-programs/{id}/analyze` → 응답 DTO 검증 → `ai_analysis` 저장
 
 ---
 
@@ -249,6 +276,8 @@ API에 해당 필드가 없고, README §3상 AI 추출 대상이다.
 - 수집 API `POST /api/admin/bizinfo/collect` 추가
 - 실제 공고 50건 저장, 재수집 시 갱신 확인
 - 테스트 26개 전부 통과
+- 목록 API `GET /api/support-programs` 추가 → MILESTONE 1 완료
+- 테스트 32개 전부 통과
 
 ### 2026-10-01
 
@@ -302,6 +331,18 @@ src/test/java/com/grantfit/program/
 src/test/resources/bizinfo/response-sample.json
 ```
 
+MILESTONE 1 목록 API 커밋:
+
+```
+src/main/java/com/grantfit/program/SupportProgramController.java
+src/main/java/com/grantfit/program/SupportProgramService.java
+src/main/java/com/grantfit/program/SupportProgramSummary.java
+src/main/java/com/grantfit/program/SupportProgramPage.java
+src/main/java/com/grantfit/program/SupportProgramMapper.java   (selectOpenList, countOpen)
+src/main/resources/mapper/SupportProgramMapper.xml
+src/test/java/com/grantfit/program/
+```
+
 ---
 
 ## 8. 테스트 상태
@@ -315,7 +356,7 @@ src/test/resources/bizinfo/response-sample.json
 - [x] 공공 API 호출 확인
 - [x] DB 저장 확인
 - [x] 중복 공고 UPSERT 확인
-- [ ] 목록 API 확인
+- [x] 목록 API 확인
 - [ ] 상세 API 확인
 - [ ] Gemini API 호출 확인
 - [ ] AI JSON Validation 확인
@@ -333,9 +374,11 @@ HealthMapperTest           tests=2
 ApplicationPeriodTest      tests=9
 BizinfoClientParseTest     tests=7   (샘플 JSON, 네트워크 없음)
 BizinfoClientLiveTest      tests=1   (실제 API, 키 없으면 skip)
-SupportProgramMapperTest   tests=3   (실제 DB, 롤백)
+SupportProgramMapperTest   tests=5   (실제 DB, 롤백)
+SupportProgramServiceTest  tests=2   (Mock, KST 기준일)
+SupportProgramControllerTest tests=2 (MockMvc, 실제 DB 조회만)
 ────────────────────────────────────────────────────────
-합계                       tests=26  failures=0  errors=0  skipped=0
+합계                       tests=32  failures=0  errors=0  skipped=0
 ```
 
 테스트 롤백으로 identity 값이 소비되어 `support_program.id` 는 1부터 시작하지 않는다.
@@ -360,6 +403,8 @@ GET /api/health      → {"status":"UP"}
 GET /api/health/db   → {"connected":true,"database":"grantfit"}
 POST /api/admin/bizinfo/collect?pageIndex=1&pageUnit=50
                      → {"fetched":50,"inserted":..,"updated":..}
+GET  /api/support-programs?page=0&size=20
+                     → {"items":[...],"page":0,"size":20,"totalCount":50}
 ```
 
 Frontend:

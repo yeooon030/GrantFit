@@ -65,4 +65,32 @@
 		 WHERE external_id = #{externalId}
 	</select>
 
+	<!-- application_end 가 NULL(상시·예산 소진 등)이면 마감되지 않은 것으로 본다. -->
+	<sql id="openCondition">
+		WHERE application_end IS NULL
+		   OR application_end &gt;= #{today}
+	</sql>
+
+	<!-- SupportProgramSummary record 생성자 인자 순서와 컬럼 순서를 맞춘다. -->
+	<select id="selectOpenList" resultType="com.grantfit.program.SupportProgramSummary">
+		SELECT id,
+		       title,
+		       organization,
+		       region,
+		       target,
+		       application_start,
+		       application_end,
+		       original_url
+		  FROM support_program
+		<include refid="openCondition"/>
+		 ORDER BY application_end ASC NULLS LAST, id DESC
+		 LIMIT #{limit} OFFSET #{offset}
+	</select>
+
+	<select id="countOpen" resultType="long">
+		SELECT count(*)
+		  FROM support_program
+		<include refid="openCondition"/>
+	</select>
+
 </mapper>
