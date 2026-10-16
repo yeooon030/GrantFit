@@ -24,6 +24,11 @@ mybatis:
     map-underscore-to-camel-case: true
     jdbc-type-for-null: NULL
 
+# 기업마당 지원사업정보 API (README §7)
+bizinfo:
+  base-url: https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do
+  api-key: ${BIZINFO_API_KEY:}
+
 logging:
   level:
     com.grantfit: DEBUG

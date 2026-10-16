@@ -1,0 +1,35 @@
+{
+  "jsonArray": [
+    {
+      "trgetNm": "중소기업",
+      "updtPnttm": "2026-10-16 15:23:38",
+      "hashtags": "인력,경남,2026,중소기업",
+      "inqireCo": 750,
+      "creatPnttm": "2026-10-16 14:04:07",
+      "pblancNm": "[경남] 2026년 중소기업 청년지원사업 모집 공고",
+      "pblancId": "PBLN_000000000127291",
+      "refrncNm": "담당기관 교육산업팀 055-000-0000",
+      "fileNm": "신청서.hwpx@포스터.pdf",
+      "pblancUrl": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127291",
+      "jrsdInsttNm": "경상남도",
+      "excInsttNm": "수행재단",
+      "totCnt": 1437,
+      "reqstMthPapersCn": "방문 및 우편 접수",
+      "pldirSportRealmLclasCodeNm": "인력",
+      "pldirSportRealmMlsfcCodeNm": "고용유지",
+      "reqstBeginEndDe": "2026-10-14 ~ 2026-10-29",
+      "bsnsSumryCn": "<p>참여기업을 다음과 같이 모집합니다.</p>"
+    },
+    {
+      "trgetNm": "소상공인",
+      "updtPnttm": "2026-10-15 10:00:00",
+      "creatPnttm": "2026-10-15 09:00:00",
+      "pblancNm": "2026년 소상공인 경영개선 지원사업",
+      "pblancId": "PBLN_000000000127200",
+      "pblancUrl": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000127200",
+      "jrsdInsttNm": "중소벤처기업부",
+      "reqstBeginEndDe": "예산 소진시까지",
+      "bsnsSumryCn": "<p>경영개선 지원</p>"
+    }
+  ]
+}

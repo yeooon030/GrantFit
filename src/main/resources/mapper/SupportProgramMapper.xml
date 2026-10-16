@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grantfit.program.SupportProgramMapper">
+
+	<!--
+		external_id 기준 UPSERT. (README §7 중복 공고 업데이트)
+		- 새 공고면 INSERT, 이미 있으면 수집 원천 컬럼만 갱신한다.
+		- region, support_amount 는 수집 대상이 아니므로 덮어쓰지 않는다.
+		- created_at 은 유지되고, updated_at 은 트리거(set_updated_at)가 갱신한다.
+		- 반환값: 새로 INSERT 됐으면 true, 기존 행을 UPDATE 했으면 false
+		  (PostgreSQL 에서 새로 삽입된 행은 xmax = 0)
+	-->
+	<select id="upsert" resultType="boolean" flushCache="true">
+		INSERT INTO support_program (
+			external_id,
+			title,
+			organization,
+			region,
+			target,
+			application_start,
+			application_end,
+			support_amount,
+			original_url,
+			raw_content
+		) VALUES (
+			#{externalId},
+			#{title},
+			#{organization},
+			#{region},
+			#{target},
+			#{applicationStart},
+			#{applicationEnd},
+			#{supportAmount},
+			#{originalUrl},
+			#{rawContent}
+		)
+		ON CONFLICT (external_id) DO UPDATE SET
+			title             = EXCLUDED.title,
+			organization      = EXCLUDED.organization,
+			target            = EXCLUDED.target,
+			application_start = EXCLUDED.application_start,
+			application_end   = EXCLUDED.application_end,
+			original_url      = EXCLUDED.original_url,
+			raw_content       = EXCLUDED.raw_content
+		RETURNING (xmax = 0) AS inserted
+	</select>
+
+	<!-- SupportProgram record 생성자 인자 순서와 컬럼 순서를 맞춘다. -->
+	<select id="selectByExternalId" resultType="com.grantfit.program.SupportProgram">
+		SELECT id,
+		       external_id,
+		       title,
+		       organization,
+		       region,
+		       target,
+		       application_start,
+		       application_end,
+		       support_amount,
+		       original_url,
+		       raw_content,
+		       created_at,
+		       updated_at
+		  FROM support_program
+		 WHERE external_id = #{externalId}
+	</select>
+
+</mapper>

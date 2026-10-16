@@ -7,14 +7,14 @@
 
 ## 1. 현재 진행 상황
 
-작성일: 2026-10-01
+작성일: 2026-10-17
 
 현재 단계:
 
 - [x] 프로젝트 초기 설정
 - [x] 지원사업 DB 스키마(DDL) 작성 및 적용
-- [ ] 공공 API 연동
-- [ ] 지원사업 DB 저장
+- [x] 공공 API 연동
+- [x] 지원사업 DB 저장 (50건, external_id UPSERT)
 - [ ] 지원사업 조회 API
 - [ ] Vue 목록/상세 화면
 - [ ] Gemini API 연동
@@ -28,12 +28,12 @@
 - [ ] README 정리
 - [ ] 최종 테스트
 
-현재 Milestone: MILESTONE 0 (README §28) — Vue를 제외하고 완료
+현재 Milestone: MILESTONE 1 (README §28) — 목록 API만 남음
 
 현재 작업:
 
-DDL 작성 및 테이블 생성 완료.
-다음 단계는 기업마당 공공 API 연동이다.
+기업마당 API 연동, DB 저장, 중복 처리(UPSERT) 완료. 실제 공고 50건 저장.
+남은 것은 목록 API 하나다.
 
 현재 브랜치:
 
@@ -44,88 +44,74 @@ main
 커밋 상태:
 
 ```
-초기 커밋 1개 (root commit) — GrantFit 초기 프로젝트 구성
-워킹트리 clean
+cff8d3b GrantFit 초기 프로젝트 구성      (origin/main 푸시됨)
++ MILESTONE 1 수집 커밋 1개              (로컬, 미푸시)
 ```
 
 ---
 
 ## 2. 이번 세션에서 완료한 작업
 
-### 프로젝트 초기 구성
+### 기업마당 API 실제 응답 확인 (2026-10-17)
 
-- Spring Boot 프로젝트 생성
-- Java 17 toolchain 설정 (README §24와 일치)
-- Spring Boot 3.5.16 사용
-- MyBatis 3.0.5 설정
-- Gradle Wrapper 8.14.3 추가
-- Lombok 의존성 추가
-- PostgreSQL 연결 설정
-- `.env` 기반 환경변수 설정
-- 기본 Spring Boot 테스트 통과
-
-### PostgreSQL
-
-로컬에 PostgreSQL이 설치되어 있지 않아,
-5432 포트에서 이미 실행 중이던 다른 프로젝트의 PostgreSQL 컨테이너를 재사용하여
-GrantFit 전용 DB와 role을 생성했다.
-
-- Database: `grantfit`
-- Role: `grantfit`
-- PostgreSQL: postgres:17-alpine (컨테이너는 다른 프로젝트 소유)
-- 포트: 5432
-
-GrantFit은 해당 컨테이너 안에서 별도 DB를 사용한다.
-기존 DB의 데이터는 읽거나 변경하지 않았다.
-
-컨테이너 이름은 환경에 따라 다르므로 포트로 찾는다.
+명세 페이지·구현 사례와 실제 응답이 달랐다. **실제 응답을 기준으로 한다.**
 
 ```
-PG_CONTAINER=$(docker ps --filter publish=5432 --format '{{.Names}}' | head -1)
+GET https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do
+    ?crtfcKey=...&dataType=json&pageUnit=N&pageIndex=N
 ```
 
-### 환경변수
+- 성공: `{"jsonArray": [ {...}, ... ]}` — `jsonArray` 가 바로 배열 (`.item` 아님)
+- 결과 없음: `{"jsonArray": []}`
+- 오류: `{"reqErr": "..."}` — **HTTP 200** 으로 온다. 본문으로 판별
+- `pageUnit` 은 `pageIndex` 와 함께 보내야 한다
+- 필드명은 JSON용(`pblancId`, `pblancNm` …). `hashtags` 는 소문자
+- 수정일 `updtPnttm` 존재 (명세엔 없었음)
+- 신청기간 `reqstBeginEndDe` = `"2026-10-14 ~ 2026-10-29"`, 일부는 `예산 소진시까지`/`상시 접수`/`모집 완료시까지`
+- 첨부파일 `fileNm`/`flpthNm` 은 여러 개면 `@` 로 연결, 없는 공고도 있음
+- `bsnsSumryCn`(사업개요)은 HTML
+- 전체 공고 수 `totCnt` ≈ 1,437 (2026-10-17)
 
-`application.yml`에서 다음 방식으로 `.env`를 읽는다.
+### 필드 매핑
 
-```yaml
-spring:
-  config:
-    import: optional:file:.env[.properties]
-```
+| API | support_program |
+|---|---|
+| `pblancId` | `external_id` |
+| `pblancNm` | `title` |
+| `jrsdInsttNm` | `organization` |
+| `trgetNm` | `target` |
+| `reqstBeginEndDe` | `application_start` / `application_end` (날짜 아니면 둘 다 NULL) |
+| `pblancUrl` | `original_url` |
+| item JSON 전체 | `raw_content` |
+| — | `region`, `support_amount` = NULL (API에 없음) |
 
-`optional:`이므로 `.env`가 없으면 OS 환경변수를 사용한다.
+수행기관·신청방법·문의처·첨부파일·등록일·수정일은 `raw_content` 로만 보존한다. 컬럼 추가 없음.
 
-실제 비밀번호 및 API Key는 `.env`에 저장하며 Git에 커밋하지 않는다.
+### 구현
 
-### DDL
+- `BizinfoClient` — API 호출, `reqErr` 판별, item 원본 JSON 보존
+- `ApplicationPeriod` — 신청기간 파싱. 형식 불일치·시작>종료면 NULL
+- `SupportProgramMapper.upsert` — `ON CONFLICT (external_id) DO UPDATE`
+  - 수집 원천 컬럼만 갱신, `region`/`support_amount` 는 덮어쓰지 않음
+  - `created_at` 유지, `updated_at` 은 트리거가 갱신
+  - `RETURNING (xmax = 0)` 으로 신규/갱신 구분
+- `POST /api/admin/bizinfo/collect?pageIndex=1&pageUnit=50` — 수집 실행 (로컬 개발용, 인증 없음)
+  - 응답 `{"fetched":50,"inserted":..,"updated":..}`, API 오류 시 502
 
-`src/main/resources/db/schema.sql`을 작성하고 `grantfit` DB에 적용했다.
+### 실제 확인
 
-생성한 테이블:
+- 1건 저장 → DB 조회로 컬럼·raw_content 확인
+- 같은 1건 재수집 → `updated 1`, id·created_at 유지, updated_at 갱신
+- 50건 수집 → `inserted 49, updated 1`, 50행
+- 50건 재수집 → `updated 50`, 행 수 변화 없음
+- 인증키가 로그·테스트 리포트에 남지 않음 확인
 
-```
-support_program
-ai_analysis
-```
+### 결정사항
 
-### 초기 커밋
-
-프로젝트 초기 설정 + DDL + 스키마 테스트를 하나의 root commit 으로 만들었다.
-
-`.env`, `build/`, `.gradle/`, `.claude/settings.local.json`이
-제외된 것을 확인한 후 커밋했다.
-
-### README 개편
-
-README.md를 Milestone 기반 구조(40개 섹션)로 전면 교체했다.
-
-### 테스트
-
-초기 테스트 과정에서
-`src/test/resources/application.yml`이 datasource 설정을 가리는 문제가 발생했다.
-
-해당 파일을 삭제한 후 테스트가 정상 통과했다.
+- README §7 "수정일" 유지 (`updtPnttm` 존재)
+- 날짜가 아닌 신청기간은 NULL, 원문은 raw_content
+- `raw_content` 는 item JSON 원본 그대로
+- 수집 실행 진입점은 관리용 POST API
 
 ---
 
@@ -133,18 +119,17 @@ README.md를 Milestone 기반 구조(40개 섹션)로 전면 교체했다.
 
 현재 작업:
 
-없음
+없음 (MILESTONE 1 목록 API 착수 전)
 
 상태:
 
-Spring Boot, PostgreSQL, MyBatis 기본 설정 완료.
-`support_program`, `ai_analysis` 테이블 생성 및 검증 완료.
-공공 API 연동은 아직 시작하지 않았다.
+실제 공고 50건이 `support_program` 에 저장되어 있다.
 
 관련 파일:
 
-- `src/main/resources/db/schema.sql`
-- `src/test/java/com/grantfit/db/SchemaTest.java`
+- `src/main/java/com/grantfit/bizinfo/`
+- `src/main/java/com/grantfit/program/`
+- `src/main/resources/mapper/SupportProgramMapper.xml`
 
 ---
 
@@ -205,22 +190,65 @@ docker exec -i "$PG_CONTAINER" \
 
 ---
 
+### ISSUE-003
+
+문제:
+
+`support_program.region`, `support_amount` 를 채우는 단계가 없다.
+API에 해당 필드가 없고, README §3상 AI 추출 대상이다.
+그런데 `region` 컬럼과 인덱스는 목록 필터용으로 존재한다.
+
+확인한 내용 (50건 hashtags):
+
+- 시·도 1개: 30건 / 15개: 17건 / 0개: 3건
+- hashtags 는 "지원 조건 지역"과 "주최 지역"을 구분하지 못한다
+
+선택지:
+
+1. AI 결과를 `support_program.region` 에 반영
+2. 목록 조회 시 `ai_analysis` 조인
+3. 수집 시 hashtags/공고명 접두어로 표시용 지역만 채움 (적합도에 사용 안 함)
+
+`support_amount` 는 `ai_analysis.support_amount_json` 과 역할이 겹친다.
+
+다음 작업:
+
+목록 API 단계에서 `announced_at` 과 함께 결정한다.
+
+---
+
+### ISSUE-004
+
+문제:
+
+`announced_at`(공고 등록일, `creatPnttm`) 컬럼이 없다.
+`created_at` 은 DB 적재 시각이라 첫 수집 50건이 거의 같은 값이다.
+"최신 공고순" 정렬 기준이 없다.
+
+다음 작업:
+
+목록 API 단계에서 컬럼 추가 여부를 결정한다. raw_content 에 보존되어 있어 백필 가능.
+
+---
+
 ## 5. 다음 세션 작업
 
-다음 세션에서는 아래 작업부터 진행한다.
-
-1. 기업마당 지원사업 OpenAPI 스펙 확인 및 API Key 발급
-2. `support_program` DTO/Mapper 작성 후 공고 1건 저장 확인
-3. 중복 공고 처리(`external_id` UPSERT) 후 50건으로 확장
-
-이후 MILESTONE 1(최소 50건 저장)로 확장한다.
-
-다음 세션 작업은 가능하면 1~3개 정도의
-구체적인 작업만 남긴다.
+1. 목록 API 설계 — ISSUE-003(region), ISSUE-004(announced_at) 결정
+2. `GET /api/support-programs` 목록 API 구현 → MILESTONE 1 완료
+3. MILESTONE 1 완료 커밋 후 푸시
 
 ---
 
 ## 6. 최근 변경사항
+
+### 2026-10-17
+
+- 기업마당 API 인증키 발급, `.env` 의 `BIZINFO_API_KEY` 에 저장
+- 실제 응답 확인 (명세와 다른 부분 §2 참고)
+- 응답 → DTO → support_program UPSERT 구현
+- 수집 API `POST /api/admin/bizinfo/collect` 추가
+- 실제 공고 50건 저장, 재수집 시 갱신 확인
+- 테스트 26개 전부 통과
 
 ### 2026-10-01
 
@@ -254,29 +282,25 @@ docker exec -i "$PG_CONTAINER" \
 
 중요 파일만 기록한다.
 
-초기 커밋에 포함된 주요 파일:
+MILESTONE 1 수집 커밋:
 
 ```
-build.gradle
-settings.gradle
-gradlew / gradlew.bat
-gradle/wrapper/
-src/main/java/com/grantfit/GrantFitApplication.java
-src/main/java/com/grantfit/config/MyBatisConfig.java
-src/main/java/com/grantfit/health/
-src/main/resources/application.yml
-src/main/resources/mapper/HealthMapper.xml
-src/main/resources/db/schema.sql
-src/test/java/com/grantfit/
-README.md
-HANDOVER.md
-.env.example
-.gitignore
+src/main/java/com/grantfit/bizinfo/BizinfoClient.java
+src/main/java/com/grantfit/bizinfo/BizinfoItem.java
+src/main/java/com/grantfit/bizinfo/ApplicationPeriod.java
+src/main/java/com/grantfit/bizinfo/BizinfoApiException.java
+src/main/java/com/grantfit/bizinfo/BizinfoCollectService.java
+src/main/java/com/grantfit/bizinfo/BizinfoCollectController.java
+src/main/java/com/grantfit/bizinfo/CollectResult.java
+src/main/java/com/grantfit/program/SupportProgram.java
+src/main/java/com/grantfit/program/SupportProgramMapper.java
+src/main/resources/mapper/SupportProgramMapper.xml
+src/main/resources/application.yml      (bizinfo 설정)
+.env.example                            (BIZINFO_API_KEY)
+src/test/java/com/grantfit/bizinfo/
+src/test/java/com/grantfit/program/
+src/test/resources/bizinfo/response-sample.json
 ```
-
-미커밋 변경 없음.
-
-실제 작업이 진행되면 중요한 변경 파일만 추가한다.
 
 ---
 
@@ -288,8 +312,9 @@ HANDOVER.md
 - [x] DB 연결 확인
 - [x] MyBatis XML 매핑 확인
 - [x] 스키마 존재 확인
-- [ ] 공공 API 호출 확인
-- [ ] DB 저장 확인
+- [x] 공공 API 호출 확인
+- [x] DB 저장 확인
+- [x] 중복 공고 UPSERT 확인
 - [ ] 목록 API 확인
 - [ ] 상세 API 확인
 - [ ] Gemini API 호출 확인
@@ -299,16 +324,21 @@ HANDOVER.md
 - [ ] Vue 화면 확인
 - [ ] Docker 실행 확인
 
-테스트 결과 (`./gradlew test`, 2026-10-01):
+테스트 결과 (`./gradlew test`, 2026-10-17):
 
 ```
-GrantFitApplicationTests   tests=1  failures=0  errors=0
-SchemaTest                 tests=3  failures=0  errors=0
-HealthMapperTest           tests=2  failures=0  errors=0
+GrantFitApplicationTests   tests=1
+SchemaTest                 tests=3
+HealthMapperTest           tests=2
+ApplicationPeriodTest      tests=9
+BizinfoClientParseTest     tests=7   (샘플 JSON, 네트워크 없음)
+BizinfoClientLiveTest      tests=1   (실제 API, 키 없으면 skip)
+SupportProgramMapperTest   tests=3   (실제 DB, 롤백)
 ────────────────────────────────────────────────────────
-합계                       tests=6  failures=0  errors=0
-BUILD SUCCESSFUL
+합계                       tests=26  failures=0  errors=0  skipped=0
 ```
+
+테스트 롤백으로 identity 값이 소비되어 `support_program.id` 는 1부터 시작하지 않는다.
 
 PostgreSQL 연결 환경에서 테스트가 정상 동작하는 것을 확인했다.
 
@@ -328,6 +358,8 @@ Backend:
 
 GET /api/health      → {"status":"UP"}
 GET /api/health/db   → {"connected":true,"database":"grantfit"}
+POST /api/admin/bizinfo/collect?pageIndex=1&pageUnit=50
+                     → {"fetched":50,"inserted":..,"updated":..}
 ```
 
 Frontend:
@@ -339,6 +371,7 @@ Database:
 PostgreSQL 연결 설정 완료.
 GrantFit 전용 `grantfit` DB와 role 생성 완료.
 `support_program`, `ai_analysis` 테이블 생성 완료.
+`support_program` 에 실제 공고 50건 저장됨.
 
 Docker:
 
@@ -358,6 +391,7 @@ GrantFit 전용 Docker 설정은 아직 하지 않음.
 DB_URL
 DB_USERNAME
 DB_PASSWORD
+BIZINFO_API_KEY  (기업마당, 미설정 시 수집 API 오류 / LiveTest skip)
 GEMINI_API_KEY   (아직 미사용)
 ```
 
@@ -572,6 +606,8 @@ HANDOVER.md의 내용과 실제 코드가 다르면
 ## 15. 주의사항
 
 - API Key를 커밋하지 않는다.
+- 기업마당 API 오류는 HTTP 200으로 온다. `reqErr` 로 판별한다.
+- 기업마당 요청 URL에 인증키가 들어간다. 예외 메시지·로그에 URL을 남기지 않는다.
 - 비밀번호를 문서에 기록하지 않는다.
 - 불필요한 라이브러리를 추가하지 않는다.
 - 기존 코드를 확인하지 않고 구조를 변경하지 않는다.
