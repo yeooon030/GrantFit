@@ -17,9 +17,9 @@
 - [x] 지원사업 DB 저장 (50건, external_id UPSERT)
 - [x] 지원사업 목록 API (상세 API는 미착수)
 - [ ] Vue 목록/상세 화면
-- [ ] Gemini API 연동
-- [ ] AI Structured Output
-- [ ] AI 결과 DB 저장
+- [x] Gemini API 연동
+- [x] AI Structured Output
+- [x] AI 결과 DB 저장 (공고 1건)
 - [ ] 사용자 조건
 - [ ] Rule Engine
 - [ ] 적합도 화면
@@ -28,11 +28,12 @@
 - [ ] README 정리
 - [ ] 최종 테스트
 
-현재 Milestone: MILESTONE 1 (README §28) 완료 → 다음은 MILESTONE 2 (공고 1건 AI 분석)
+현재 Milestone: MILESTONE 2 (README §28) 완료 → 다음은 MILESTONE 3 (AI 실패 처리)
 
 현재 작업:
 
-MILESTONE 1 완료 기준 5개(API 호출, DTO 변환, DB 저장, 중복 처리, 목록 API) 모두 충족.
+MILESTONE 2 완료 기준 6개(Gemini 호출, Structured Output, JSON Schema, DTO 역직렬화, Validation, DB 저장) 모두 충족.
+공고 id 50 실제 분석 → COMPLETED 저장, 재요청 시 재사용 확인.
 
 현재 브랜치:
 
@@ -45,7 +46,8 @@ main
 ```
 cff8d3b GrantFit 초기 프로젝트 구성
 fb9048c 기업마당 지원사업 API 수집 및 support_program UPSERT 구현
-+ MILESTONE 1 목록 API 커밋
+7818403 지원사업 목록 API 구현 (MILESTONE 1 완료)
++ MILESTONE 2 AI 분석 커밋
 모두 origin/main 푸시
 ```
 
@@ -107,6 +109,55 @@ GET https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do
 - 50건 재수집 → `updated 50`, 행 수 변화 없음
 - 인증키가 로그·테스트 리포트에 남지 않음 확인
 
+### MILESTONE 2 — 공고 1건 AI 분석 (2026-10-17)
+
+```
+POST /api/support-programs/{id}/analyze
+→ {"analysisId","status","model","promptVersion","reused","errorCode","errorMessage","analyzedAt","result"}
+```
+
+흐름:
+
+```
+support_program.raw_content
+→ AnalysisInput      README §8 항목(공고명·소관기관·사업개요·지원대상·신청기간·신청방법), HTML 정리
+→ GeminiClient       generateContent + responseMimeType/responseJsonSchema, temperature 0
+→ AnalysisResult     DTO. 스키마에 없는 필드가 오면 INVALID_JSON
+→ AnalysisValidator  값 범위 + evidence 원문 포함 검사
+→ ai_analysis        COMPLETED / FAILED(error_code)
+```
+
+결정사항:
+
+- API: `generateContent` (interactions 아님. 상태 저장 불필요, 자료 많음)
+- 모델: `gemini-3.8-flash` 기본, `GEMINI_MODEL` 로 변경 가능. DB `model` 에는 응답의 `modelVersion` 저장
+- 프롬프트/스키마: `resources/ai/analysis-prompt-v1.txt`, `analysis-schema-v1.json`, `AnalysisPrompt.VERSION = "v1"`
+- 지역 enum: 기업마당 표기 16개 시·도(**광주+전남 = `전남광주`**) + `전국`
+- evidence 가 원문에 하나라도 없으면 분석 전체 FAILED(VALIDATION_ERROR)
+- 같은 (공고, prompt_version) COMPLETED 가 있으면 Gemini 호출 없이 재사용. FAILED 면 같은 행을 비우고 재분석
+- Gemini 호출 중 트랜잭션을 잡지 않는다
+
+ai_analysis 컬럼 매핑 (README §9 → DDL):
+
+| 응답 | 컬럼 |
+|---|---|
+| regions, businessAge, applicantTypes, eligibility | `eligibility_json` = `{regions, businessAge, applicantTypes, conditions}` |
+| exclusions | `exclusion_json` |
+| preferences | `preference_json` (추가) |
+| support | `support_amount_json` |
+| requiredDocuments | `required_documents_json` |
+| uncertainConditions | `uncertain_conditions_json` |
+| evidence (구조화 값의 근거) | `evidence_json` |
+| summary | `summary` (추가) |
+
+DDL 변경: `preference_json JSONB`, `summary TEXT` 추가. schema.sql 에 `ADD COLUMN IF NOT EXISTS` 포함, 개발 DB 적용 완료.
+
+실제 확인:
+
+- 프로토타입 4건(id 50, 45, 42, 11): 스키마 거부 없음, evidence 18/18 원문 일치, 4~11초
+- API 1차 6.9초 COMPLETED, 2차 0.01초 reused
+- temperature 0 이어도 실행마다 결과가 다를 수 있음 (requiredDocuments 3개 ↔ 1개) → MILESTONE 4 측정 대상
+
 ### 목록 API (2026-10-17)
 
 ```
@@ -137,11 +188,12 @@ GET /api/support-programs?page=0&size=20
 
 현재 작업:
 
-없음 (MILESTONE 1 완료, MILESTONE 2 착수 전)
+없음 (MILESTONE 2 완료, MILESTONE 3 착수 전)
 
 상태:
 
-실제 공고 50건이 `support_program` 에 저장되어 있고 목록 API로 조회된다.
+실제 공고 50건이 `support_program` 에 저장되어 있다.
+`ai_analysis` 에 공고 id 50 의 v1 분석 1건(COMPLETED)이 있다.
 
 관련 파일:
 
@@ -256,17 +308,37 @@ MILESTONE 2 AI 분석 결과 구조를 본 뒤 1/2/3안 중 결정한다.
 
 ---
 
+### ISSUE-006
+
+문제:
+
+AnalysisException 이 아닌 예외(raw_content 손상, DB 오류 등)가 나면 ai_analysis 행이 ANALYZING 으로 남는다.
+같은 공고를 동시에 요청하면 Gemini 가 두 번 호출된다.
+
+다음 작업:
+
+MILESTONE 3 (AI 실패 처리) 에서 처리한다.
+
+---
+
 ## 5. 다음 세션 작업
 
-MILESTONE 2 — 공고 1건 AI 분석 (README §28)
+MILESTONE 3 — AI 실패 처리 (README §28)
 
-1. Gemini API 키 발급 및 Structured Output / JSON Schema 스펙 확인 (실제 호출로)
-2. 공고 1건 AI 입력 구성 (raw_content 의 pblancNm, bsnsSumryCn(HTML 정리), trgetNm, reqstBeginEndDe, reqstMthPapersCn)
-3. `POST /api/support-programs/{id}/analyze` → 응답 DTO 검증 → `ai_analysis` 저장
+1. ISSUE-006: 예상 못 한 예외도 FAILED 로 기록, ANALYZING 잔류 방지
+2. 실패 유형별 동작 확인 (Timeout, 429, Invalid JSON, Validation, Network) 및 제한된 재시도
+3. 여러 공고 분석(README §12, 20건)으로 실패율·evidence 불일치율 확인
 
 ---
 
 ## 6. 최근 변경사항
+
+### 2026-10-17 (MILESTONE 2)
+
+- Gemini API 키 발급, generateContent + Structured Output 실제 호출 확인
+- `POST /api/support-programs/{id}/analyze` 구현 → MILESTONE 2 완료
+- ai_analysis `preference_json`, `summary` 컬럼 추가
+- 테스트 60개 전부 통과
 
 ### 2026-10-17
 
@@ -331,6 +403,21 @@ src/test/java/com/grantfit/program/
 src/test/resources/bizinfo/response-sample.json
 ```
 
+MILESTONE 2 AI 분석 커밋:
+
+```
+src/main/java/com/grantfit/analysis/        (AnalysisService, GeminiClient, AnalysisValidator,
+                                             AnalysisInput, AnalysisResult, AnalysisPrompt,
+                                             AiAnalysis, AiAnalysisMapper, AnalysisController 등)
+src/main/resources/ai/analysis-prompt-v1.txt
+src/main/resources/ai/analysis-schema-v1.json
+src/main/resources/mapper/AiAnalysisMapper.xml
+src/main/resources/db/schema.sql            (preference_json, summary)
+src/main/resources/application.yml          (gemini 설정)
+src/test/java/com/grantfit/analysis/
+src/test/resources/analysis/                (실제 Gemini 응답·공고 샘플)
+```
+
 MILESTONE 1 목록 API 커밋:
 
 ```
@@ -358,9 +445,9 @@ src/test/java/com/grantfit/program/
 - [x] 중복 공고 UPSERT 확인
 - [x] 목록 API 확인
 - [ ] 상세 API 확인
-- [ ] Gemini API 호출 확인
-- [ ] AI JSON Validation 확인
-- [ ] AI 결과 DB 저장 확인
+- [x] Gemini API 호출 확인
+- [x] AI JSON Validation 확인
+- [x] AI 결과 DB 저장 확인
 - [ ] Rule Engine 테스트
 - [ ] Vue 화면 확인
 - [ ] Docker 실행 확인
@@ -377,8 +464,14 @@ BizinfoClientLiveTest      tests=1   (실제 API, 키 없으면 skip)
 SupportProgramMapperTest   tests=5   (실제 DB, 롤백)
 SupportProgramServiceTest  tests=2   (Mock, KST 기준일)
 SupportProgramControllerTest tests=2 (MockMvc, 실제 DB 조회만)
+AnalysisInputTest          tests=3
+AnalysisValidatorTest      tests=7
+GeminiClientParseTest      tests=5   (실제 응답 샘플, 네트워크 없음)
+AnalysisServiceTest        tests=7   (Mock — 재사용/성공/INVALID_JSON/VALIDATION_ERROR/RATE_LIMIT)
+AiAnalysisMapperTest       tests=5   (실제 DB, 롤백)
+GeminiClientLiveTest       tests=1   (실제 Gemini 1회, 키 없으면 skip)
 ────────────────────────────────────────────────────────
-합계                       tests=32  failures=0  errors=0  skipped=0
+합계                       tests=60  failures=0  errors=0  skipped=0
 ```
 
 테스트 롤백으로 identity 값이 소비되어 `support_program.id` 는 1부터 시작하지 않는다.
@@ -405,6 +498,8 @@ POST /api/admin/bizinfo/collect?pageIndex=1&pageUnit=50
                      → {"fetched":50,"inserted":..,"updated":..}
 GET  /api/support-programs?page=0&size=20
                      → {"items":[...],"page":0,"size":20,"totalCount":50}
+POST /api/support-programs/{id}/analyze
+                     → {"status":"COMPLETED","reused":false,"result":{...}}
 ```
 
 Frontend:
@@ -437,7 +532,8 @@ DB_URL
 DB_USERNAME
 DB_PASSWORD
 BIZINFO_API_KEY  (기업마당, 미설정 시 수집 API 오류 / LiveTest skip)
-GEMINI_API_KEY   (아직 미사용)
+GEMINI_API_KEY   (Gemini, 미설정 시 분석 FAILED(API_ERROR) / LiveTest skip)
+GEMINI_MODEL     (선택, 기본 gemini-3.8-flash)
 ```
 
 환경변수의 실제 값은 `.env` 또는 로컬 환경에서 관리한다.
@@ -468,7 +564,7 @@ Gradle 8.14.3
 PostgreSQL 17
 Lombok                 (compileOnly)
 Vue                    (미착수)
-Gemini API             (미착수)
+Gemini API             gemini-3.8-flash, generateContent
 Docker                 (미착수)
 ```
 

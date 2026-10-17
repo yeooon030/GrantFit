@@ -1,0 +1,31 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\n  \"summary\": \"광주광역시 관내 중소 제조업체의 판로 확대를 위해 지마켓, 롯데온 등 유명 디지털플랫폼 내 전용 기획전 개설, 배너 노출, 할인쿠폰 프로모션 및 입점 교육 프로그램을 지원하는 사업입니다.\",\n  \"regions\": [\"전남광주\"],\n  \"businessAge\": {\n    \"minYears\": null,\n    \"maxYears\": null\n  },\n  \"applicantTypes\": [],\n  \"support\": {\n    \"maxAmount\": null,\n    \"selfPaymentRequired\": null\n  },\n  \"eligibility\": [\n    {\n      \"condition\": \"광주광역시 관내 사업자등록증을 보유한 중소 제조업체\",\n      \"evidence\": \"광주광역시 관내 사업자등록증을 보유한 중소 제조업체\"\n    },\n    {\n      \"condition\": \"직접생산확인증명서 또는 공장등록증을 보유한 중소 제조업체(생산제품 사진 첨부)\",\n      \"evidence\": \"직접생산확인증명서 또는 공장등록증을 보유한 중소 제조업체(생산제품 사진 첨부)\"\n    },\n    {\n      \"condition\": \"기업에서 직접 생산한 상품(OEM제품 제외)의 입점을 희망하는 중소 제조업체\",\n      \"evidence\": \"기업에서 직접 생산한 상품(OEM제품 제외)의 입점을 희망하는 중소 제조업체\"\n    },\n    {\n      \"condition\": \"온라인몰 판매에 적합한 제품 입점을 희망하는 중소 제조업체\",\n      \"evidence\": \"온라인몰 판매에 적합한 제품 입점을 희망하는 중소 제조업체\"\n    },\n    {\n      \"condition\": \"‘26년 이전 온라인 입점기업 중 입점을 희망하는 중소 제조업체(중복 지원 가능) 등\",\n      \"evidence\": \"‘26년 이전 온라인 입점기업 중 입점을 희망하는 중소 제조업체(중복 지원 가능) 등\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"condition\": \"OEM 제품 제외\",\n      \"evidence\": \"기업에서 직접 생산한 상품(OEM제품 제외)의 입점을 희망하는 중소 제조업체\"\n    }\n  ],\n  \"preferences\": [],\n  \"requiredDocuments\": [\n    \"사업자등록증\",\n    \"직접생산확인증명서 또는 공장등록증\",\n    \"생산제품 사진\"\n  ],\n  \"uncertainConditions\": [],\n  \"evidence\": {\n    \"regions\": \"광주광역시 관내 사업자등록증을 보유한 중소 제조업체\",\n    \"businessAge\": null,\n    \"applicantTypes\": null,\n    \"support\": null\n  }\n}",
+            "thoughtSignature": "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"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 531,
+    "candidatesTokenCount": 625,
+    "totalTokenCount": 1850,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 531
+      }
+    ],
+    "thoughtsTokenCount": 694,
+    "serviceTier": "standard"
+  },
+  "modelVersion": "gemini-3.8-flash"
+}

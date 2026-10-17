@@ -15,6 +15,8 @@ public interface SupportProgramMapper {
 	 */
 	boolean upsert(SupportProgram supportProgram);
 
+	SupportProgram selectById(long id);
+
 	SupportProgram selectByExternalId(String externalId);
 
 	/**

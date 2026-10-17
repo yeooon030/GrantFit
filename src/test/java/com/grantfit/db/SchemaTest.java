@@ -38,6 +38,7 @@ class SchemaTest {
 				"id", "support_program_id", "model", "prompt_version", "status",
 				"eligibility_json", "exclusion_json", "required_documents_json",
 				"support_amount_json", "uncertain_conditions_json", "evidence_json",
+				"preference_json", "summary",
 				"error_code", "error_message", "analyzed_at", "created_at", "updated_at");
 	}
 

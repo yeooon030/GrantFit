@@ -76,6 +76,9 @@ CREATE TABLE IF NOT EXISTS ai_analysis (
     support_amount_json       JSONB,
     uncertain_conditions_json JSONB,
     evidence_json             JSONB,
+    -- README §9 의 preferences, summary (MILESTONE 2 에서 추가)
+    preference_json           JSONB,
+    summary                   TEXT,
 
     -- 실패 원인 구분 (README §12, MILESTONE 3)
     error_code                VARCHAR(30),
@@ -109,11 +112,18 @@ CREATE TABLE IF NOT EXISTS ai_analysis (
     )
 );
 
+-- MILESTONE 2 이전에 테이블을 만든 DB 용
+ALTER TABLE ai_analysis ADD COLUMN IF NOT EXISTS preference_json JSONB;
+ALTER TABLE ai_analysis ADD COLUMN IF NOT EXISTS summary         TEXT;
+
 COMMENT ON TABLE  ai_analysis                IS 'AI 가 구조화하고 서버가 검증한 공고 분석 결과';
 COMMENT ON COLUMN ai_analysis.status         IS 'WAITING / ANALYZING / COMPLETED / FAILED (README §28 MILESTONE 3)';
 COMMENT ON COLUMN ai_analysis.error_code     IS 'API_ERROR / TIMEOUT / RATE_LIMIT / INVALID_JSON / VALIDATION_ERROR (README §12)';
 COMMENT ON COLUMN ai_analysis.prompt_version IS '프롬프트 버전. 재사용 및 버전 비교 기준 (README §15, §16)';
 COMMENT ON COLUMN ai_analysis.analyzed_at    IS '분석이 실제로 완료된 시각';
+COMMENT ON COLUMN ai_analysis.eligibility_json IS '{regions, businessAge, applicantTypes, conditions[]}';
+COMMENT ON COLUMN ai_analysis.evidence_json  IS '구조화 값(regions, businessAge, applicantTypes, support)의 근거 문장';
+COMMENT ON COLUMN ai_analysis.preference_json IS '우대 조건 [{condition, evidence}]';
 
 -- 공고 상세에서 해당 공고의 분석 이력 조회 (README §22)
 CREATE INDEX IF NOT EXISTS ix_ai_analysis_support_program_id

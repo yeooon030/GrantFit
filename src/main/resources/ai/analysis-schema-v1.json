@@ -1,0 +1,216 @@
+{
+  "type": "object",
+  "properties": {
+    "summary": {
+      "type": "string",
+      "description": "사업 내용 한두 문장 요약"
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "서울",
+          "부산",
+          "대구",
+          "인천",
+          "전남광주",
+          "대전",
+          "울산",
+          "세종",
+          "경기",
+          "강원",
+          "충북",
+          "충남",
+          "전북",
+          "경북",
+          "경남",
+          "제주",
+          "전국"
+        ]
+      },
+      "description": "신청 기업의 소재지 조건. 원문에 없으면 빈 배열"
+    },
+    "businessAge": {
+      "type": "object",
+      "properties": {
+        "minYears": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "창업 후 최소 업력(년)"
+        },
+        "maxYears": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "창업 후 최대 업력(년)"
+        }
+      },
+      "required": [
+        "minYears",
+        "maxYears"
+      ]
+    },
+    "applicantTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "SOLE_PROPRIETOR",
+          "CORPORATION",
+          "PRE_FOUNDER"
+        ]
+      },
+      "description": "신청 가능한 기업 형태. SOLE_PROPRIETOR=개인사업자, CORPORATION=법인, PRE_FOUNDER=예비창업자"
+    },
+    "support": {
+      "type": "object",
+      "properties": {
+        "maxAmount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "기업당 최대 지원금액(원)"
+        },
+        "selfPaymentRequired": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "자부담 필요 여부"
+        }
+      },
+      "required": [
+        "maxAmount",
+        "selfPaymentRequired"
+      ]
+    },
+    "eligibility": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "공고 원문에서 그대로 복사한 근거 문장"
+          }
+        },
+        "required": [
+          "condition",
+          "evidence"
+        ]
+      },
+      "description": "지원 대상 조건"
+    },
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "공고 원문에서 그대로 복사한 근거 문장"
+          }
+        },
+        "required": [
+          "condition",
+          "evidence"
+        ]
+      },
+      "description": "제외 조건"
+    },
+    "preferences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "공고 원문에서 그대로 복사한 근거 문장"
+          }
+        },
+        "required": [
+          "condition",
+          "evidence"
+        ]
+      },
+      "description": "우대 조건"
+    },
+    "requiredDocuments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "제출 서류"
+    },
+    "uncertainConditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "원문만으로 확인이 어려운 조건"
+    },
+    "evidence": {
+      "type": "object",
+      "description": "regions, businessAge, applicantTypes, support 값의 근거 문장. 값이 없으면 null",
+      "properties": {
+        "regions": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "businessAge": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "applicantTypes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "support": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "regions",
+        "businessAge",
+        "applicantTypes",
+        "support"
+      ]
+    }
+  },
+  "required": [
+    "summary",
+    "regions",
+    "businessAge",
+    "applicantTypes",
+    "support",
+    "eligibility",
+    "exclusions",
+    "preferences",
+    "requiredDocuments",
+    "uncertainConditions",
+    "evidence"
+  ]
+}

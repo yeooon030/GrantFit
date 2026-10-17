@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grantfit.analysis.AiAnalysisMapper">
+
+	<!-- AiAnalysis record 생성자 인자 순서와 컬럼 순서를 맞춘다. JSONB 는 문자열로 읽는다. -->
+	<sql id="columns">
+		id,
+		support_program_id,
+		model,
+		prompt_version,
+		status,
+		eligibility_json::text          AS eligibility_json,
+		exclusion_json::text            AS exclusion_json,
+		required_documents_json::text   AS required_documents_json,
+		support_amount_json::text       AS support_amount_json,
+		uncertain_conditions_json::text AS uncertain_conditions_json,
+		evidence_json::text             AS evidence_json,
+		preference_json::text           AS preference_json,
+		summary,
+		error_code,
+		error_message,
+		analyzed_at,
+		created_at,
+		updated_at
+	</sql>
+
+	<select id="selectById" resultType="com.grantfit.analysis.AiAnalysis">
+		SELECT <include refid="columns"/>
+		  FROM ai_analysis
+		 WHERE id = #{id}
+	</select>
+
+	<select id="selectByProgramAndVersion" resultType="com.grantfit.analysis.AiAnalysis">
+		SELECT <include refid="columns"/>
+		  FROM ai_analysis
+		 WHERE support_program_id = #{supportProgramId}
+		   AND prompt_version = #{promptVersion}
+	</select>
+
+	<!-- UNIQUE (support_program_id, prompt_version) 기준. 재분석이면 이전 결과·오류를 비운다. -->
+	<select id="upsertAnalyzing" resultType="long" flushCache="true">
+		INSERT INTO ai_analysis (support_program_id, model, prompt_version, status)
+		VALUES (#{supportProgramId}, #{model}, #{promptVersion}, 'ANALYZING')
+		ON CONFLICT (support_program_id, prompt_version) DO UPDATE SET
+			model                     = EXCLUDED.model,
+			status                    = 'ANALYZING',
+			eligibility_json          = NULL,
+			exclusion_json            = NULL,
+			required_documents_json   = NULL,
+			support_amount_json       = NULL,
+			uncertain_conditions_json = NULL,
+			evidence_json             = NULL,
+			preference_json           = NULL,
+			summary                   = NULL,
+			error_code                = NULL,
+			error_message             = NULL,
+			analyzed_at               = NULL
+		RETURNING id
+	</select>
+
+	<update id="updateCompleted">
+		UPDATE ai_analysis SET
+			model                     = #{model},
+			status                    = 'COMPLETED',
+			eligibility_json          = #{eligibilityJson}::jsonb,
+			exclusion_json            = #{exclusionJson}::jsonb,
+			required_documents_json   = #{requiredDocumentsJson}::jsonb,
+			support_amount_json       = #{supportAmountJson}::jsonb,
+			uncertain_conditions_json = #{uncertainConditionsJson}::jsonb,
+			evidence_json             = #{evidenceJson}::jsonb,
+			preference_json           = #{preferenceJson}::jsonb,
+			summary                   = #{summary},
+			error_code                = NULL,
+			error_message             = NULL,
+			analyzed_at               = now()
+		 WHERE id = #{id}
+	</update>
+
+	<update id="updateFailed">
+		UPDATE ai_analysis SET
+			status        = 'FAILED',
+			error_code    = #{errorCode},
+			error_message = #{errorMessage}
+		 WHERE id = #{id}
+	</update>
+
+</mapper>

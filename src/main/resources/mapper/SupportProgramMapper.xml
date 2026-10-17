@@ -47,20 +47,30 @@
 	</select>
 
 	<!-- SupportProgram record 생성자 인자 순서와 컬럼 순서를 맞춘다. -->
+	<sql id="programColumns">
+		id,
+		external_id,
+		title,
+		organization,
+		region,
+		target,
+		application_start,
+		application_end,
+		support_amount,
+		original_url,
+		raw_content,
+		created_at,
+		updated_at
+	</sql>
+
+	<select id="selectById" resultType="com.grantfit.program.SupportProgram">
+		SELECT <include refid="programColumns"/>
+		  FROM support_program
+		 WHERE id = #{id}
+	</select>
+
 	<select id="selectByExternalId" resultType="com.grantfit.program.SupportProgram">
-		SELECT id,
-		       external_id,
-		       title,
-		       organization,
-		       region,
-		       target,
-		       application_start,
-		       application_end,
-		       support_amount,
-		       original_url,
-		       raw_content,
-		       created_at,
-		       updated_at
+		SELECT <include refid="programColumns"/>
 		  FROM support_program
 		 WHERE external_id = #{externalId}
 	</select>
