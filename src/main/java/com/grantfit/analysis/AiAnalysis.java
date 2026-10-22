@@ -21,6 +21,7 @@ public record AiAnalysis(
 		String summary,
 		String errorCode,
 		String errorMessage,
+		int attemptCount,
 		OffsetDateTime analyzedAt,
 		OffsetDateTime createdAt,
 		OffsetDateTime updatedAt) {

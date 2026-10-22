@@ -20,6 +20,7 @@
 		summary,
 		error_code,
 		error_message,
+		attempt_count,
 		analyzed_at,
 		created_at,
 		updated_at
@@ -38,8 +39,15 @@
 		   AND prompt_version = #{promptVersion}
 	</select>
 
-	<!-- UNIQUE (support_program_id, prompt_version) 기준. 재분석이면 이전 결과·오류를 비운다. -->
-	<select id="upsertAnalyzing" resultType="long" flushCache="true">
+	<!--
+		UNIQUE (support_program_id, prompt_version) 기준. 재분석이면 이전 결과·오류를 비운다.
+		- COMPLETED 는 덮어쓰지 않는다 (재사용 대상, README §16)
+		- ANALYZING 은 다른 요청이 분석 중이므로 덮어쓰지 않는다 (중복 Gemini 호출 방지)
+		  단, 10분 이상 갱신이 없으면 서버 중단 등으로 남은 행으로 보고 다시 분석한다.
+		  (최대 소요: 타임아웃 60초 × 3회 + 대기 ≈ 3.5분)
+		조건에 걸리면 행이 반환되지 않아 null 이 된다.
+	-->
+	<select id="upsertAnalyzing" resultType="java.lang.Long" flushCache="true">
 		INSERT INTO ai_analysis (support_program_id, model, prompt_version, status)
 		VALUES (#{supportProgramId}, #{model}, #{promptVersion}, 'ANALYZING')
 		ON CONFLICT (support_program_id, prompt_version) DO UPDATE SET
@@ -55,7 +63,10 @@
 			summary                   = NULL,
 			error_code                = NULL,
 			error_message             = NULL,
+			attempt_count             = 0,
 			analyzed_at               = NULL
+		 WHERE ai_analysis.status IN ('WAITING', 'FAILED')
+		    OR (ai_analysis.status = 'ANALYZING' AND ai_analysis.updated_at &lt; now() - INTERVAL '10 minutes')
 		RETURNING id
 	</select>
 
@@ -73,15 +84,30 @@
 			summary                   = #{summary},
 			error_code                = NULL,
 			error_message             = NULL,
+			attempt_count             = #{attemptCount},
 			analyzed_at               = now()
 		 WHERE id = #{id}
 	</update>
+
+	<select id="selectProgramIdsToAnalyze" resultType="java.lang.Long">
+		SELECT p.id
+		  FROM support_program p
+		 WHERE NOT EXISTS (
+				SELECT 1
+				  FROM ai_analysis a
+				 WHERE a.support_program_id = p.id
+				   AND a.prompt_version = #{promptVersion}
+				   AND a.status = 'COMPLETED')
+		 ORDER BY p.id
+		 LIMIT #{limit}
+	</select>
 
 	<update id="updateFailed">
 		UPDATE ai_analysis SET
 			status        = 'FAILED',
 			error_code    = #{errorCode},
-			error_message = #{errorMessage}
+			error_message = #{errorMessage},
+			attempt_count = #{attemptCount}
 		 WHERE id = #{id}
 	</update>
 

@@ -23,17 +23,17 @@
 - [ ] 사용자 조건
 - [ ] Rule Engine
 - [ ] 적합도 화면
-- [ ] 예외 처리
+- [x] 예외 처리 (AI 실패 처리, MILESTONE 3)
 - [ ] Docker
 - [ ] README 정리
 - [ ] 최종 테스트
 
-현재 Milestone: MILESTONE 2 (README §28) 완료 → 다음은 MILESTONE 3 (AI 실패 처리)
+현재 Milestone: MILESTONE 3 (README §28) 구현 완료 → 남은 것: README §12 20건 결과 채우기
 
 현재 작업:
 
-MILESTONE 2 완료 기준 6개(Gemini 호출, Structured Output, JSON Schema, DTO 역직렬화, Validation, DB 저장) 모두 충족.
-공고 id 50 실제 분석 → COMPLETED 저장, 재요청 시 재사용 확인.
+실패 처리(오류 분류·재시도·INTERNAL_ERROR·동시 요청 방지)와 일괄 분석 API 구현 완료.
+20건 중 12건이 Gemini 무료 등급 일일 한도(20회)로 미분석 — 한도 초기화 후 재실행한다.
 
 현재 브랜치:
 
@@ -47,7 +47,9 @@ main
 cff8d3b GrantFit 초기 프로젝트 구성
 fb9048c 기업마당 지원사업 API 수집 및 support_program UPSERT 구현
 7818403 지원사업 목록 API 구현 (MILESTONE 1 완료)
-+ MILESTONE 2 AI 분석 커밋
+2ee8186 공고 1건 Gemini AI 분석 구현 (MILESTONE 2 완료)
+1c26bad README 체크리스트 진행 상황 반영 (MILESTONE 0~2)
++ MILESTONE 3 AI 실패 처리 커밋
 모두 origin/main 푸시
 ```
 
@@ -108,6 +110,70 @@ GET https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do
 - 50건 수집 → `inserted 49, updated 1`, 50행
 - 50건 재수집 → `updated 50`, 행 수 변화 없음
 - 인증키가 로그·테스트 리포트에 남지 않음 확인
+
+### MILESTONE 3 — AI 실패 처리 (2026-10-22)
+
+오류 분류와 재시도:
+
+| 상황 | error_code | 재시도 |
+|---|---|---|
+| HTTP 429 | RATE_LIMIT | O (retryDelay 참고, 30초 초과면 X) |
+| HTTP 5xx | API_ERROR | O |
+| 그 외 4xx (키 오류 등) | API_ERROR | X |
+| 응답 시간 초과 | TIMEOUT | O |
+| 연결 실패 | NETWORK_ERROR (추가) | O |
+| JSON 변환 실패 / MAX_TOKENS | INVALID_JSON | X |
+| 검증 실패 | VALIDATION_ERROR | X |
+| 그 외 예외 | INTERNAL_ERROR (추가) | X |
+
+- 최대 3회 호출(재시도 2회), 대기 1초 → 2초. `gemini.retry.*` 설정
+- INVALID_JSON/VALIDATION_ERROR 를 재시도하지 않는 이유: 재시도로 통과시키면 AI 품질 문제가 가려진다
+- `attempt_count` 에 Gemini 호출 횟수 기록 (재시도 없이 성공 = 1)
+- 예상 못 한 예외도 FAILED(INTERNAL_ERROR) 로 기록 → ANALYZING 잔류 없음 (ISSUE-006 해결)
+- 동시 요청: `upsertAnalyzing` 이 COMPLETED/진행 중 ANALYZING 행을 덮어쓰지 않고 null 반환 → 409
+  10분 이상 갱신 없는 ANALYZING 은 서버 중단 잔류로 보고 재분석
+- 오류 메시지: 본문 앞부분 자르기 대신 `error.status + message + quotaId` 요약
+
+**시간 초과는 예외 타입이 아니라 원인 체인으로 판별한다.**
+Gemini 는 헤더를 먼저 보내고 본문을 늦게 보내서, 읽기 시간 초과가 본문 변환 중에 나고
+Spring 이 `RestClientException`(← `SocketTimeoutException`)으로 감싼다. Mock 테스트로는 재현되지 않았고 실제 호출로 발견했다.
+
+일괄 분석:
+
+```
+POST /api/admin/analysis/batch?limit=20
+→ {total, completed, completedAfterRetry, failed, failuresByCode, skipped, notAttempted, stoppedByRateLimit, items}
+```
+
+- v1 COMPLETED 가 없는 공고를 id 순으로 순차 분석, 공고 사이 1초 간격
+- RATE_LIMIT 으로 최종 실패하면 나머지는 시도하지 않고 멈춘다
+
+실제 확인 (2026-10-22):
+
+| 상황 | 결과 |
+|---|---|
+| 잘못된 키 | API_ERROR, 1회 |
+| timeout 1초 | TIMEOUT ×2 재시도 → 3회차 실제 503 → API_ERROR, 3회 |
+| 닫힌 포트 | NETWORK_ERROR, 3회 |
+| FAILED 공고 재분석 | 같은 행 COMPLETED |
+| 동시 요청 2건 | 200 + 409 |
+| 20건 일괄 | 완료 8(재시도 후 2) / RATE_LIMIT 12 / VALIDATION_ERROR 0 |
+
+누적 v1: COMPLETED 11건(그중 3건은 Gemini 503 을 재시도로 극복), VALIDATION_ERROR 0건.
+
+### Gemini 무료 등급 한도 (중요)
+
+```
+quotaId    GenerateRequestsPerDayPerProjectPerModel-FreeTier
+quotaValue 20      ← gemini-3.8-flash 하루 20회 (프로젝트·모델 단위)
+초기화      태평양 자정 = 한국 16:00 (서머타임 해제 후 17:00)
+```
+
+- 무료 등급으로 계속 진행하기로 결정 (2026-10-22). 하루 20회 안에서 작업한다
+- 재시도 호출도 한도에 포함된다
+- 실제 Gemini 를 호출하는 `GeminiClientLiveTest` 는 `GEMINI_LIVE_TEST=true` 일 때만 실행한다
+  (이전에는 `./gradlew test` 마다 2회씩 소모했다)
+- 프로토타입·수동 호출도 한도를 쓴다. 꼭 필요한 호출만 한다
 
 ### MILESTONE 2 — 공고 1건 AI 분석 (2026-10-17)
 
@@ -188,12 +254,12 @@ GET /api/support-programs?page=0&size=20
 
 현재 작업:
 
-없음 (MILESTONE 2 완료, MILESTONE 3 착수 전)
+README §12 20건 일괄 분석 중 미분석 12건 재실행 대기 (Gemini 일일 한도)
 
 상태:
 
-실제 공고 50건이 `support_program` 에 저장되어 있다.
-`ai_analysis` 에 공고 id 50 의 v1 분석 1건(COMPLETED)이 있다.
+`ai_analysis` v1: COMPLETED 11건, FAILED(RATE_LIMIT) 12건.
+일괄 분석 API 를 다시 호출하면 COMPLETED 가 없는 공고(FAILED 포함)만 다시 분석한다.
 
 관련 파일:
 
@@ -308,30 +374,43 @@ MILESTONE 2 AI 분석 결과 구조를 본 뒤 1/2/3안 중 결정한다.
 
 ---
 
-### ISSUE-006
+### ISSUE-006 (해결)
+
+MILESTONE 3 에서 INTERNAL_ERROR 기록과 동시 요청 409 로 해결했다.
+
+---
+
+### ISSUE-007
 
 문제:
 
-AnalysisException 이 아닌 예외(raw_content 손상, DB 오류 등)가 나면 ai_analysis 행이 ANALYZING 으로 남는다.
-같은 공고를 동시에 요청하면 Gemini 가 두 번 호출된다.
+Gemini 무료 등급 일일 20회 한도. MILESTONE 4(20~30건 Golden Dataset, 프롬프트 버전 비교)는
+분석·재분석 호출이 많아 하루에 끝나지 않는다.
 
-다음 작업:
+결정:
 
-MILESTONE 3 (AI 실패 처리) 에서 처리한다.
+무료 등급 유지. 하루 20회 단위로 나눠 진행한다.
 
 ---
 
 ## 5. 다음 세션 작업
 
-MILESTONE 3 — AI 실패 처리 (README §28)
-
-1. ISSUE-006: 예상 못 한 예외도 FAILED 로 기록, ANALYZING 잔류 방지
-2. 실패 유형별 동작 확인 (Timeout, 429, Invalid JSON, Validation, Network) 및 제한된 재시도
-3. 여러 공고 분석(README §12, 20건)으로 실패율·evidence 불일치율 확인
+1. 한도 초기화 후 `POST /api/admin/analysis/batch?limit=20` 재실행 → README §12 20건 결과 기록, MILESTONE 3 완료
+2. MILESTONE 4 — AI 정확도 측정: Golden Dataset 대상 공고 선정과 기준값 작성 방식 결정 (사람이 직접 작성)
+3. ISSUE-005 (숫자 아닌 page 파라미터 메시지) 정리
 
 ---
 
 ## 6. 최근 변경사항
+
+### 2026-10-22 (MILESTONE 3)
+
+- 오류 분류·재시도·attempt_count·INTERNAL_ERROR·동시 요청 409 구현
+- error_code 에 NETWORK_ERROR, INTERNAL_ERROR 추가 (DDL CHECK 변경)
+- 일괄 분석 API `POST /api/admin/analysis/batch`
+- 실패 상황 실제 재현, 20건 일괄 분석 1차(8건 완료, 12건 일일 한도)
+- Gemini 실제 호출 테스트를 GEMINI_LIVE_TEST=true 일 때만 실행하도록 변경
+- 테스트 86개 (실행 84, Gemini live 2 skip)
 
 ### 2026-10-17 (MILESTONE 2)
 
@@ -403,6 +482,20 @@ src/test/java/com/grantfit/program/
 src/test/resources/bizinfo/response-sample.json
 ```
 
+MILESTONE 3 AI 실패 처리 커밋:
+
+```
+src/main/java/com/grantfit/analysis/AnalysisRetryPolicy.java      (신규)
+src/main/java/com/grantfit/analysis/AnalysisBatchService.java     (신규)
+src/main/java/com/grantfit/analysis/AnalysisBatchController.java  (신규)
+src/main/java/com/grantfit/analysis/AnalysisInProgressException.java (신규)
+src/main/java/com/grantfit/analysis/GeminiClient.java             (오류 분류, errorSummary, retryDelay)
+src/main/java/com/grantfit/analysis/AnalysisService.java          (재시도, INTERNAL_ERROR, 409)
+src/main/resources/mapper/AiAnalysisMapper.xml                    (조건부 upsert, attempt_count, 일괄 대상 조회)
+src/main/resources/db/schema.sql                                  (error_code 2개, attempt_count)
+src/test/java/com/grantfit/analysis/                              (RetryPolicy, ClientError, Batch 테스트)
+```
+
 MILESTONE 2 AI 분석 커밋:
 
 ```
@@ -467,11 +560,17 @@ SupportProgramControllerTest tests=2 (MockMvc, 실제 DB 조회만)
 AnalysisInputTest          tests=3
 AnalysisValidatorTest      tests=7
 GeminiClientParseTest      tests=5   (실제 응답 샘플, 네트워크 없음)
-AnalysisServiceTest        tests=7   (Mock — 재사용/성공/INVALID_JSON/VALIDATION_ERROR/RATE_LIMIT)
-AiAnalysisMapperTest       tests=5   (실제 DB, 롤백)
-GeminiClientLiveTest       tests=1   (실제 Gemini 1회, 키 없으면 skip)
+AnalysisServiceTest        tests=12  (Mock — 재사용/성공/INVALID_JSON/VALIDATION_ERROR/재시도/INTERNAL_ERROR/409)
+AiAnalysisMapperTest       tests=9   (실제 DB, 롤백)
+GeminiClientLiveTest       tests=2   (실제 Gemini, GEMINI_LIVE_TEST=true 일 때만)
+GeminiClientErrorTest      tests=10  (MockRestServiceServer — 429/5xx/4xx/timeout/network)
+AnalysisRetryPolicyTest    tests=5
+AnalysisBatchServiceTest   tests=1
 ────────────────────────────────────────────────────────
-합계                       tests=60  failures=0  errors=0  skipped=0
+합계                       tests=86  failures=0  errors=0  skipped=2 (Gemini live)
+
+Gemini live 테스트 실행:
+GEMINI_LIVE_TEST=true ./gradlew test --tests '*GeminiClientLiveTest'   (호출 2회 소모)
 ```
 
 테스트 롤백으로 identity 값이 소비되어 `support_program.id` 는 1부터 시작하지 않는다.
@@ -499,7 +598,10 @@ POST /api/admin/bizinfo/collect?pageIndex=1&pageUnit=50
 GET  /api/support-programs?page=0&size=20
                      → {"items":[...],"page":0,"size":20,"totalCount":50}
 POST /api/support-programs/{id}/analyze
-                     → {"status":"COMPLETED","reused":false,"result":{...}}
+                     → {"status":"COMPLETED","reused":false,"attemptCount":1,"result":{...}}
+                       분석 중이면 409
+POST /api/admin/analysis/batch?limit=20
+                     → {"total":20,"completed":..,"failed":..,"failuresByCode":{..},"stoppedByRateLimit":..}
 ```
 
 Frontend:
@@ -748,6 +850,7 @@ HANDOVER.md의 내용과 실제 코드가 다르면
 
 - API Key를 커밋하지 않는다.
 - 기업마당 API 오류는 HTTP 200으로 온다. `reqErr` 로 판별한다.
+- Gemini 무료 등급은 하루 20회. 실제 호출 테스트·프로토타입·일괄 분석 모두 한도에 포함된다.
 - 기업마당 요청 URL에 인증키가 들어간다. 예외 메시지·로그에 URL을 남기지 않는다.
 - 비밀번호를 문서에 기록하지 않는다.
 - 불필요한 라이브러리를 추가하지 않는다.

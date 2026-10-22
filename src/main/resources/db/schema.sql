@@ -84,6 +84,9 @@ CREATE TABLE IF NOT EXISTS ai_analysis (
     error_code                VARCHAR(30),
     error_message             TEXT,
 
+    -- Gemini 호출 횟수. 1 = 재시도 없음 (README §12 집계, MILESTONE 3)
+    attempt_count             INT          NOT NULL DEFAULT 0,
+
     -- 분석이 실제로 완료된 시각 (README §15)
     analyzed_at               TIMESTAMPTZ,
 
@@ -104,7 +107,8 @@ CREATE TABLE IF NOT EXISTS ai_analysis (
     ),
     CONSTRAINT ck_ai_analysis_error_code CHECK (
         error_code IS NULL
-        OR error_code IN ('API_ERROR', 'TIMEOUT', 'RATE_LIMIT', 'INVALID_JSON', 'VALIDATION_ERROR')
+        OR error_code IN ('API_ERROR', 'TIMEOUT', 'RATE_LIMIT', 'INVALID_JSON', 'VALIDATION_ERROR',
+                          'NETWORK_ERROR', 'INTERNAL_ERROR')
     ),
     -- FAILED 면 원인을 반드시 남긴다.
     CONSTRAINT ck_ai_analysis_failed_has_error CHECK (
@@ -116,9 +120,19 @@ CREATE TABLE IF NOT EXISTS ai_analysis (
 ALTER TABLE ai_analysis ADD COLUMN IF NOT EXISTS preference_json JSONB;
 ALTER TABLE ai_analysis ADD COLUMN IF NOT EXISTS summary         TEXT;
 
+-- MILESTONE 3 이전에 테이블을 만든 DB 용
+ALTER TABLE ai_analysis ADD COLUMN IF NOT EXISTS attempt_count INT NOT NULL DEFAULT 0;
+ALTER TABLE ai_analysis DROP CONSTRAINT IF EXISTS ck_ai_analysis_error_code;
+ALTER TABLE ai_analysis ADD CONSTRAINT ck_ai_analysis_error_code CHECK (
+    error_code IS NULL
+    OR error_code IN ('API_ERROR', 'TIMEOUT', 'RATE_LIMIT', 'INVALID_JSON', 'VALIDATION_ERROR',
+                      'NETWORK_ERROR', 'INTERNAL_ERROR')
+);
+
 COMMENT ON TABLE  ai_analysis                IS 'AI 가 구조화하고 서버가 검증한 공고 분석 결과';
 COMMENT ON COLUMN ai_analysis.status         IS 'WAITING / ANALYZING / COMPLETED / FAILED (README §28 MILESTONE 3)';
-COMMENT ON COLUMN ai_analysis.error_code     IS 'API_ERROR / TIMEOUT / RATE_LIMIT / INVALID_JSON / VALIDATION_ERROR (README §12)';
+COMMENT ON COLUMN ai_analysis.error_code     IS 'API_ERROR / TIMEOUT / RATE_LIMIT / INVALID_JSON / VALIDATION_ERROR (README §12) + NETWORK_ERROR / INTERNAL_ERROR (MILESTONE 3)';
+COMMENT ON COLUMN ai_analysis.attempt_count  IS 'Gemini 호출 횟수. 1 = 재시도 없음';
 COMMENT ON COLUMN ai_analysis.prompt_version IS '프롬프트 버전. 재사용 및 버전 비교 기준 (README §15, §16)';
 COMMENT ON COLUMN ai_analysis.analyzed_at    IS '분석이 실제로 완료된 시각';
 COMMENT ON COLUMN ai_analysis.eligibility_json IS '{regions, businessAge, applicantTypes, conditions[]}';

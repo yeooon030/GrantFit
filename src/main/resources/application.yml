@@ -35,6 +35,13 @@ gemini:
   model: ${GEMINI_MODEL:gemini-3.8-flash}
   api-key: ${GEMINI_API_KEY:}
   timeout-seconds: 60
+  # 일시적 오류(TIMEOUT, RATE_LIMIT, 5xx, NETWORK_ERROR) 재시도 (MILESTONE 3)
+  retry:
+    max-attempts: 3            # 최초 1회 + 재시도 2회
+    initial-backoff-millis: 1000
+    max-wait-seconds: 30       # 429 retryDelay 가 이보다 길면 재시도하지 않는다
+  batch:
+    interval-millis: 1000      # 일괄 분석 시 공고 사이 간격
 
 logging:
   level:

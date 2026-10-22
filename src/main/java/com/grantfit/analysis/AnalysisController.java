@@ -38,6 +38,11 @@ public class AnalysisController {
 		return toResponse(outcome.analysis(), outcome.reused());
 	}
 
+	@ExceptionHandler(AnalysisInProgressException.class)
+	public ResponseEntity<Map<String, Object>> handleInProgress(AnalysisInProgressException e) {
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+	}
+
 	@ExceptionHandler(SupportProgramNotFoundException.class)
 	public ResponseEntity<Map<String, Object>> handleNotFound(SupportProgramNotFoundException e) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
@@ -58,7 +63,7 @@ public class AnalysisController {
 		}
 		return new AnalysisResponse(
 				a.id(), a.supportProgramId(), a.status(), a.model(), a.promptVersion(), reused,
-				a.errorCode(), a.errorMessage(), a.analyzedAt(), result);
+				a.errorCode(), a.errorMessage(), a.attemptCount(), a.analyzedAt(), result);
 	}
 
 	private JsonNode read(String json) {
@@ -81,6 +86,7 @@ public class AnalysisController {
 			boolean reused,
 			String errorCode,
 			String errorMessage,
+			int attemptCount,
 			OffsetDateTime analyzedAt,
 			Map<String, JsonNode> result) {
 	}
