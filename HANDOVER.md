@@ -28,12 +28,11 @@
 - [ ] README 정리
 - [ ] 최종 테스트
 
-현재 Milestone: MILESTONE 3 (README §28) 구현 완료 → 남은 것: README §12 20건 결과 채우기
+현재 Milestone: MILESTONE 3 (README §28) 완료 → 다음은 MILESTONE 4 (AI 정확도 측정)
 
 현재 작업:
 
-실패 처리(오류 분류·재시도·INTERNAL_ERROR·동시 요청 방지)와 일괄 분석 API 구현 완료.
-20건 중 12건이 Gemini 무료 등급 일일 한도(20회)로 미분석 — 한도 초기화 후 재실행한다.
+실패 처리와 일괄 분석 구현, README §12 20건 분석 완료 (정상 14 / 재시도 후 성공 4 / 최종 실패 2).
 
 현재 브랜치:
 
@@ -49,7 +48,8 @@ fb9048c 기업마당 지원사업 API 수집 및 support_program UPSERT 구현
 7818403 지원사업 목록 API 구현 (MILESTONE 1 완료)
 2ee8186 공고 1건 Gemini AI 분석 구현 (MILESTONE 2 완료)
 1c26bad README 체크리스트 진행 상황 반영 (MILESTONE 0~2)
-+ MILESTONE 3 AI 실패 처리 커밋
+f4ca0e3 AI 분석 실패 처리 및 일괄 분석 구현 (MILESTONE 3)
++ README §12 20건 결과 기록 커밋
 모두 origin/main 푸시
 ```
 
@@ -159,7 +159,25 @@ POST /api/admin/analysis/batch?limit=20
 | 동시 요청 2건 | 200 + 409 |
 | 20건 일괄 | 완료 8(재시도 후 2) / RATE_LIMIT 12 / VALIDATION_ERROR 0 |
 
-누적 v1: COMPLETED 11건(그중 3건은 Gemini 503 을 재시도로 극복), VALIDATION_ERROR 0건.
+### README §12 — 20건 분석 결과 (2026-10-22)
+
+대상: 공고 id 20~39 (20건), gemini-3.8-flash, prompt v1.
+1차(15:38)는 일일 한도로 12건이 RATE_LIMIT → 한도 초기화(16:00) 후 같은 API 로 재실행.
+
+```
+전체 공고          20
+정상 응답          14   (1회 호출로 성공)
+재시도 후 성공       4   (Gemini 503 과부하 → 재시도)
+최종 실패           2   (id 36, 39: 503 "high demand" 3회 연속, API_ERROR)
+INVALID_JSON       0
+VALIDATION_ERROR   0   (evidence 원문 대조 전부 통과)
+```
+
+- 실패 원인은 모두 Gemini 측 일시적 과부하(503). 응답 형식·검증 실패는 0건
+- 2차 실행은 대상 12건 + 다음 공고(id 40, 41)까지 진행하다 id 41 에서 일일 한도(RATE_LIMIT) → 설계대로 중단, 6건 미시도
+- 429 오류 메시지에 `[quotaId=GenerateRequestsPerDayPerProjectPerModel-FreeTier, quotaValue=20]` 이 남는 것 실제 확인
+
+누적 v1 (2026-10-22 16:06): COMPLETED 22건, FAILED 3건(API_ERROR 2, RATE_LIMIT 1).
 
 ### Gemini 무료 등급 한도 (중요)
 
@@ -254,11 +272,11 @@ GET /api/support-programs?page=0&size=20
 
 현재 작업:
 
-README §12 20건 일괄 분석 중 미분석 12건 재실행 대기 (Gemini 일일 한도)
+없음 (MILESTONE 3 완료, MILESTONE 4 착수 전)
 
 상태:
 
-`ai_analysis` v1: COMPLETED 11건, FAILED(RATE_LIMIT) 12건.
+`ai_analysis` v1: COMPLETED 22건, FAILED 3건(id 36, 39 API_ERROR / id 41 RATE_LIMIT).
 일괄 분석 API 를 다시 호출하면 COMPLETED 가 없는 공고(FAILED 포함)만 다시 분석한다.
 
 관련 파일:
@@ -393,10 +411,29 @@ Gemini 무료 등급 일일 20회 한도. MILESTONE 4(20~30건 Golden Dataset, �
 
 ---
 
+### ISSUE-008
+
+문제:
+
+Gemini 503 과부하("high demand")가 자주 난다. 20건 중 6건이 1회 이상 503 을 받았고 2건은 3회 연속 실패했다.
+재시도 호출도 일일 20회 한도에 포함되어, 하루에 분석 가능한 공고는 실질적으로 15건 안팎이다.
+
+선택지:
+
+- 503 대기 시간을 늘린다 (현재 1초 → 2초). 성공률은 오르지만 한도 소모는 같다
+- 일괄 분석 간격을 늘려 과부하 시간대를 피한다
+- 현재 상태 유지 (실패 건은 다음 날 재실행)
+
+다음 작업:
+
+MILESTONE 4 진행 중 실패가 계속 문제가 되면 결정한다. 지금은 유지.
+
+---
+
 ## 5. 다음 세션 작업
 
-1. 한도 초기화 후 `POST /api/admin/analysis/batch?limit=20` 재실행 → README §12 20건 결과 기록, MILESTONE 3 완료
-2. MILESTONE 4 — AI 정확도 측정: Golden Dataset 대상 공고 선정과 기준값 작성 방식 결정 (사람이 직접 작성)
+1. MILESTONE 4 — AI 정확도 측정: Golden Dataset 대상 공고 선정과 기준값 작성 방식 결정 (사람이 직접 작성)
+2. Golden Dataset 대상 공고의 v1 분석 확보 (현재 COMPLETED 22건, 실패 3건은 재실행)
 3. ISSUE-005 (숫자 아닌 page 파라미터 메시지) 정리
 
 ---
@@ -408,7 +445,8 @@ Gemini 무료 등급 일일 20회 한도. MILESTONE 4(20~30건 Golden Dataset, �
 - 오류 분류·재시도·attempt_count·INTERNAL_ERROR·동시 요청 409 구현
 - error_code 에 NETWORK_ERROR, INTERNAL_ERROR 추가 (DDL CHECK 변경)
 - 일괄 분석 API `POST /api/admin/analysis/batch`
-- 실패 상황 실제 재현, 20건 일괄 분석 1차(8건 완료, 12건 일일 한도)
+- 실패 상황 실제 재현
+- README §12 20건 분석: 정상 14 / 재시도 후 성공 4 / 최종 실패 2 (503), VALIDATION_ERROR 0
 - Gemini 실제 호출 테스트를 GEMINI_LIVE_TEST=true 일 때만 실행하도록 변경
 - 테스트 86개 (실행 84, Gemini live 2 skip)
 
