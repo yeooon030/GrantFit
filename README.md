@@ -276,11 +276,11 @@ PostgreSQL
 
 ### 1차 성공 기준
 
-- [ ] API 호출 성공
-- [ ] JSON 응답 DTO 변환
-- [ ] PostgreSQL 저장
-- [ ] 중복 공고 업데이트
-- [ ] 목록 API 제공
+- [x] API 호출 성공
+- [x] JSON 응답 DTO 변환
+- [x] PostgreSQL 저장
+- [x] 중복 공고 업데이트
+- [x] 목록 API 제공
 
 초기에는 AI를 사용하지 않는다.
 
@@ -427,12 +427,12 @@ PostgreSQL
 
 완료 조건:
 
-- [ ] Gemini API 호출
-- [ ] Structured Output 사용
-- [ ] JSON Schema 정의
-- [ ] Java DTO 역직렬화
-- [ ] 서버 측 Validation
-- [ ] DB 저장
+- [x] Gemini API 호출
+- [x] Structured Output 사용
+- [x] JSON Schema 정의
+- [x] Java DTO 역직렬화
+- [x] 서버 측 Validation
+- [x] DB 저장
 - [ ] 실패 상태 및 로그 처리
 
 공고 1건이 제대로 분석되는 것을 확인한 후에만 다음 단계로 넘어간다.
@@ -981,10 +981,10 @@ Vue
 
 완료 기준:
 
-- [ ] Spring Boot 실행
-- [ ] PostgreSQL 연결
-- [ ] MyBatis 기본 설정
-- [ ] 기본 Health Check
+- [x] Spring Boot 실행
+- [x] PostgreSQL 연결
+- [x] MyBatis 기본 설정
+- [x] 기본 Health Check
 - [ ] Vue 실행
 
 AI 사용 없음.
@@ -1007,11 +1007,11 @@ PostgreSQL
 
 완료 기준:
 
-- [ ] API 호출
-- [ ] DTO 변환
-- [ ] DB 저장
-- [ ] 중복 공고 처리
-- [ ] 목록 API
+- [x] API 호출
+- [x] DTO 변환
+- [x] DB 저장
+- [x] 중복 공고 처리
+- [x] 목록 API
 
 AI 사용 없음.
 
@@ -1046,12 +1046,12 @@ DB
 
 완료 기준:
 
-- [ ] Gemini API 호출
-- [ ] Structured Output
-- [ ] JSON Schema
-- [ ] DTO 역직렬화
-- [ ] Validation
-- [ ] DB 저장
+- [x] Gemini API 호출
+- [x] Structured Output
+- [x] JSON Schema
+- [x] DTO 역직렬화
+- [x] Validation
+- [x] DB 저장
 
 여기가 첫 번째 AI 성공 지점이다.
 
@@ -1426,15 +1426,15 @@ AI 결과를 검증하고 측정하는 구조를 직접 설계했다는 것이�
 - [x] MyBatis 기본 설정
 - [x] 환경변수 기반 설정
 - [x] 기본 테스트
-- [ ] 지원사업 DDL
-- [ ] 공공 API 연동
-- [ ] 지원사업 저장
-- [ ] 지원사업 조회 API
+- [x] 지원사업 DDL
+- [x] 공공 API 연동
+- [x] 지원사업 저장
+- [x] 지원사업 조회 API
 - [ ] Vue 화면
-- [ ] Gemini API 연동
-- [ ] Structured Output
-- [ ] AI 결과 Validation
-- [ ] AI 결과 저장
+- [x] Gemini API 연동
+- [x] Structured Output
+- [x] AI 결과 Validation
+- [x] AI 결과 저장
 - [ ] 기업 Profile
 - [ ] Rule Engine
 - [ ] 적합도
