@@ -1,0 +1,419 @@
+{
+  "description": "MILESTONE 4 Golden Dataset. 작성 기준은 evaluation/README.md. labeled=true 인 항목만 평가한다.",
+  "items": [
+    {
+      "externalId": "PBLN_000000000127291",
+      "title": "[경남] 김해시 2026년 김해형 중소기업 근로소득 청년지원사업 모집 공고",
+      "labeled": true,
+      "regions": [
+        "경남"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-14",
+      "applicationEnd": "2026-10-29",
+      "note": "김해시 소재 중소기업이 신청 대상이다. 청년 1인당 360만원 및 장기근속 인센티브 100만원은 명시되어 있으나 기업당 최대 지원금은 확인할 수 없어 null로 설정했다."
+    },
+    {
+      "externalId": "PBLN_000000000127290",
+      "title": "[경북] 청도군 2026년 청년농업인 R&D 기술창업 통합관리 지원사업 신청 공고",
+      "labeled": true,
+      "regions": [
+        "경북"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [
+        "CORPORATION"
+      ],
+      "applicationStart": "2026-10-16",
+      "applicationEnd": "2026-11-03",
+      "note": "청도군 공고이며 청년농업인이 대표인 5인 이상의 창업(예정) 법인 또는 품목모임체 등이 대상이다. 법인이 명시되어 CORPORATION을 적용했다. 창업 예정 법인과 단체도 포함되지만 PRE_FOUNDER 개인 자격은 명시되지 않았다. 지원은 컨설팅 및 창업기반 조성으로 금액이 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127289",
+      "title": "[경남] 통영시 강구안 동네상권 컨설팅 (점포환경개선ㆍVMD)사업 참가자 모집 공고",
+      "labeled": true,
+      "regions": [
+        "경남"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-12",
+      "applicationEnd": "2026-10-23",
+      "note": "신청 대상은 신청일 기준 강구안 상권활성화 사업 대상지 내 상인이다. 상인의 점포(사업장)가 통영시 강구안 대상지에 있어야 하므로 경남을 적용했다. 컨설팅 및 점포 VMD 지원이며 금액은 명시되지 않았다."
+    },
+    {
+      "externalId": "PBLN_000000000127288",
+      "title": "[경북] 상주시 2026년 하반기 영농부산물 안전처리 지원사업 신청 공고",
+      "labeled": true,
+      "regions": [
+        "경북"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-21",
+      "applicationEnd": "2026-10-30",
+      "note": "신청 대상은 관내 농지를 소유 또는 임대하여 실경작 중인 농업인이다. 신청자의 농지가 상주시 관내에 있어야 하므로 경북을 적용했다. 영농부산물 파쇄 지원으로 기업당 금액은 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127287",
+      "title": "[경북] 포항시 2026년 소상공인 대상 무료 택시지붕광고 참여업체 추가모집 공고",
+      "labeled": true,
+      "regions": [
+        "경북"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-14",
+      "applicationEnd": "2026-11-30",
+      "note": "포항시 관내에서 사업장을 운영 중인 소상공인이 대상이므로 경북을 적용했다. 무료 광고 송출 서비스이며 금액 한도는 명시되지 않았다."
+    },
+    {
+      "externalId": "PBLN_000000000127286",
+      "title": "[경남] 거창군 2026년 하반기 착한가격업소(가격안정 모범업소) 지정 모집 재공고",
+      "labeled": true,
+      "regions": [
+        "경남"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [
+        "SOLE_PROPRIETOR",
+        "CORPORATION"
+      ],
+      "applicationStart": "2026-10-15",
+      "applicationEnd": "2026-10-19",
+      "note": "관내 개인사업자와 법인이 명시되어 두 기업 형태를 적용했다. 거창군 관내 업소가 대상이므로 경남을 적용했다. 지정, 표찰 및 인센티브 지원이며 정액 금액은 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127285",
+      "title": "[경남] 창원시 2026년 중소기업 육성자금 지원계획 변경 공고",
+      "labeled": true,
+      "regions": [
+        "경남"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": null,
+      "applicationEnd": null,
+      "note": "창원시에 본사와 사업장을 둔 중소기업이 대상이므로 경남을 적용했다. 경영안정자금 및 시설자금의 이차보전율은 제시되어 있으나 융자 원금 한도가 명시되지 않았다. 신청기간은 예산 소진 시까지이므로 null이다."
+    },
+    {
+      "externalId": "PBLN_000000000127284",
+      "title": "6G 서비스 시나리오 공모전 - 6G 시연 기획 Track 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-08",
+      "applicationEnd": "2026-11-08",
+      "note": "사업자등록증을 보유한 중소·스타트업 및 중견기업 등 기업이 대상이다. 개인사업자와 법인을 별도로 명시하지 않아 applicantTypes는 빈 배열로 판단하는 것이 엄격한 기준에 부합한다. 기업 대상이라는 표현만으로 기업 형태를 특정할 수 없다. 지원금액은 공고문 참조로 구체적인 기업당 한도가 없어 null이다."
+    },
+    {
+      "externalId": "PBLN_000000000127283",
+      "title": "[경남] 하동군 2027년 특용작물(녹차) 시설현대화 지원사업 예비사업자 신청 공고",
+      "labeled": true,
+      "regions": [
+        "경남"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [
+        "CORPORATION"
+      ],
+      "applicationStart": "2026-10-14",
+      "applicationEnd": "2026-10-23",
+      "note": "하동군에 주소 및 거주 중인 농업인과 농업법인이 대상이다. 농업법인이 명시되어 CORPORATION을 적용했다. 시설 기자재 교체 및 구입 지원이며 금액 한도는 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127282",
+      "title": "[경남] 의령군 2026년 청년 일경험(인턴) 지원사업 참여기업 모집 재공고",
+      "labeled": true,
+      "regions": [
+        "경남"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-13",
+      "applicationEnd": "2026-11-16",
+      "note": "의령군 소재 기업이 대상이므로 경남을 적용했다. 일경험 수당은 월 150만원/인 × 3개월, 멘토수당은 월 5만원/인 × 3개월이지만 지원 인원 상한이 없어 기업당 최대 금액은 확정할 수 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127281",
+      "title": "6G 서비스 시나리오 공모전 - 6G 예상 시나리오 Track 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-08",
+      "applicationEnd": "2026-11-08",
+      "note": "일반인 또는 사업자등록증을 보유한 기업이 참가 가능하다. 사업자등록 기업의 개인사업자·법인 구분은 명시되지 않아 applicantTypes는 빈 배열로 두는 것이 엄격한 기준에 부합한다. 총 상금 3,700만원은 전체 수상 상금이며 기업당 지원금이 아니므로 maxAmount는 null이다."
+    },
+    {
+      "externalId": "PBLN_000000000127280",
+      "title": "[경남] 창원시 2026년 4차 채소화훼분야 보조사업 추가대상자 모집 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [
+        "CORPORATION"
+      ],
+      "applicationStart": "2026-10-13",
+      "applicationEnd": "2026-10-27",
+      "note": "신청 대상은 채소·과수·화훼 재배 농업인, 농업법인 및 생산자단체다. 농업법인이 명시되어 CORPORATION을 적용했다. 창원시 공고이나 자격은 작물 재배 및 시설 조건으로 제시되어 기업 소재지 조건은 명시되지 않았으므로 regions는 빈 배열이다."
+    },
+    {
+      "externalId": "PBLN_000000000127279",
+      "title": "[경남] 양산시 2026년 2차 축산물 판매업소 위생시설개선 지원사업 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-12",
+      "applicationEnd": "2026-10-23",
+      "note": "축산물판매업소 중 식육즉석판매가공업 및 식육판매업이 대상이다. 양산시 공고이지만 기업 소재지 조건은 명시되지 않아 regions는 빈 배열이다. 시설개보수비 지원이지만 기업당 최대 지원금액은 명시되지 않았다."
+    },
+    {
+      "externalId": "PBLN_000000000127278",
+      "title": "[경기] 성남시 전남광주-성남cnd 연계 바이오 인프라 프로모션 참여기업 모집 공고",
+      "labeled": true,
+      "regions": [
+        "경기"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-09-30",
+      "applicationEnd": "2026-10-23",
+      "note": "성남의 바이오·제약·의료기기·식품·화장품 관련 관내 기업이 대상이므로 경기를 적용했다. 교통, 숙박, 식사 지원으로 금액은 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127277",
+      "title": "일본진출 K-스타트업 AI 역직구 온라인 한국관 특별전 모집 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-16",
+      "applicationEnd": "2026-10-31",
+      "note": "유망 소비재기업 중 국내 온라인 스토어 보유 기업이 대상이다. 지역, 업력 및 개인사업자·법인 형태 조건은 명시되지 않았다. 일본 온라인 판로 구축 지원으로 기업당 정액 지원금은 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127276",
+      "title": "2026년 바이오매스 관련 혁신제품 컨설팅 참여기업 모집 공고 (산업혁신기반구축사업 연구기반 구축과제)",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": 2000000,
+      "applicantTypes": [],
+      "applicationStart": null,
+      "applicationEnd": null,
+      "note": "기업당 2,000천원 기술코칭 지원이 명시되어 maxAmount는 2000000원이다. 특정 지역 소재지나 기업 형태 조건은 명시되지 않았다. 신청기간은 예산 소진 시까지이므로 null이다."
+    },
+    {
+      "externalId": "PBLN_000000000127275",
+      "title": "[세종] 2026년 2차 지역형 예비사회적기업 지정계획 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [
+        "CORPORATION"
+      ],
+      "applicationStart": "2026-10-12",
+      "applicationEnd": "2026-10-23",
+      "note": "예비사회적기업 지정요건을 갖춘 법인·단체가 대상이므로 법인을 근거로 CORPORATION을 적용했다. 세종시 공고이나 소재지 조건은 신청 자격에 명시되지 않았다. 지정 및 후속 지원사업 참여 자격을 부여하는 내용이며 정액 지원금은 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127274",
+      "title": "[세종] 2026년 LH 임대주택 중소기업 기숙사 기관공급 대상 기업 모집 공고",
+      "labeled": true,
+      "regions": [
+        "세종"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-13",
+      "applicationEnd": "2026-10-26",
+      "note": "세종특별자치시에 소재지를 둔 중소기업이 대상이므로 세종을 적용했다. 중소기업이라는 표현만 있고 개인사업자·법인 형태는 명시되지 않았다. LH 임대주택을 기숙사로 활용하도록 연계하는 지원으로 금액은 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127273",
+      "title": "[대전] 2026년 우리동네 맑은공기 패키지 지원사업(대전산단) 공고",
+      "labeled": true,
+      "regions": [
+        "대전"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-26",
+      "applicationEnd": "2026-11-20",
+      "note": "대전산업단지에 소재한 중소기업 중 대기환경보전법상 1~5종 사업장이 대상이므로 대전을 적용했다. 방지시설 설치비용의 90%를 지원하지만 기업당 최대 지원금액은 명시되지 않았다."
+    },
+    {
+      "externalId": "PBLN_000000000127272",
+      "title": "2026년 7차 재취업지원서비스 기업컨설팅 지원 사업장 모집 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-14",
+      "applicationEnd": "2026-11-02",
+      "note": "재취업지원서비스 의무대상기업 및 제도 도입·개선 희망 기업이 대상이다. 지역·업력·기업 형태 제한은 명시되지 않았다. 컨설팅 지원이며 기업당 최대 지원금액은 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127271",
+      "title": "[강원] 2026년 하반기 강원특별자치도 우수ㆍ모두애 마을기업 모집 공고",
+      "labeled": true,
+      "regions": [
+        "강원"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": 100000000,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-15",
+      "applicationEnd": "2026-10-22",
+      "note": "강원특별자치도 마을기업 모집이다. 우수 유형은 최대 70백만원, 모두애 유형은 최대 100백만원이므로 가장 큰 금액인 100000000원을 적용했다. 유형별로 지정 후 경과 연수 등의 조건은 있으나 일반적인 창업 업력 조건과는 달라 businessAge는 null이다. 마을기업이라는 표현만으로 개인사업자·법인 형태를 특정하지 않았다."
+    },
+    {
+      "externalId": "PBLN_000000000127270",
+      "title": "2026년 AI 기반 주파수 간섭분석 및 전파예측기술 개발사업 신규지원 대상과제 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-11-03",
+      "applicationEnd": "2026-11-16",
+      "note": "국가연구개발혁신법 시행령상 지원 가능한 기업이 대상이며 중소기업, 중견기업, 공기업 등 여러 형태가 열거되어 있다. 개인사업자·법인 구분은 명시되지 않았다. 연구개발비 지원이나 기업당 최대 금액은 제시되지 않았다."
+    },
+    {
+      "externalId": "PBLN_000000000127269",
+      "title": "2027년 일본 동경 쌀가공식품 수출확대 수출컨소시엄 한국관 참가기업 모집 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-15",
+      "applicationEnd": "2026-11-03",
+      "note": "일본 전시회 참가 희망 기업이 대상이며 지역·업력·기업 형태 제한은 명시되지 않았다. 전시품 운송비 100%, 한국관 참가비 70%, 통역비 50%, 샘플 발송비 업체당 100만원 등이 있으나 각 지원항목을 합산한 기업당 최대 지원금액은 확인할 수 없어 null이다."
+    },
+    {
+      "externalId": "PBLN_000000000127268",
+      "title": "2026년 2차 공급망안정화 선도사업자 선정계획 공고",
+      "labeled": true,
+      "regions": [],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": "2026-10-15",
+      "applicationEnd": "2026-11-16",
+      "note": "경제안보품목 및 서비스의 도입·생산·제공에 기여하고자 하는 사업자 또는 사업자단체가 대상이다. 지역·업력·기업 형태 조건은 명시되지 않았으며 공급망 안정화 기금 등 지원의 구체적인 기업당 최대 금액도 없다."
+    },
+    {
+      "externalId": "PBLN_000000000127258",
+      "title": "[전남광주] 2026년 중소기업 온라인몰 입점 지원사업 참여기업 모집 변경 공고",
+      "labeled": true,
+      "regions": [
+        "전남광주"
+      ],
+      "businessAge": {
+        "minYears": null,
+        "maxYears": null
+      },
+      "maxAmount": null,
+      "applicantTypes": [],
+      "applicationStart": null,
+      "applicationEnd": null,
+      "note": "광주광역시 관내 사업자등록증을 보유한 중소 제조업체가 대상이므로 README의 지역 코드에 따라 전남광주를 적용했다. 중소기업·제조업체라는 표현만으로 개인사업자·법인 형태를 특정하지 않았다. 온라인몰 입점·홍보·교육 서비스 지원이며 금액은 없다. 상시 접수이므로 신청기간은 null이다."
+    }
+  ]
+}

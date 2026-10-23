@@ -28,11 +28,12 @@
 - [ ] README 정리
 - [ ] 최종 테스트
 
-현재 Milestone: MILESTONE 3 (README §28) 완료 → 다음은 MILESTONE 4 (AI 정확도 측정)
+현재 Milestone: MILESTONE 4 (README §28) 완료 → 다음은 MILESTONE 5 (기업 Profile)
 
 현재 작업:
 
-실패 처리와 일괄 분석 구현, README §12 20건 분석 완료 (정상 14 / 재시도 후 성공 4 / 최종 실패 2).
+Golden Dataset 25건 작성, prompt v1 정확도 측정 완료. 결과는 README §14 "측정 결과".
+주요 필드 94.6% / Evidence 100% / Structured Output 100% — 목표 3개 충족.
 
 현재 브랜치:
 
@@ -49,7 +50,8 @@ fb9048c 기업마당 지원사업 API 수집 및 support_program UPSERT 구현
 2ee8186 공고 1건 Gemini AI 분석 구현 (MILESTONE 2 완료)
 1c26bad README 체크리스트 진행 상황 반영 (MILESTONE 0~2)
 f4ca0e3 AI 분석 실패 처리 및 일괄 분석 구현 (MILESTONE 3)
-+ README §12 20건 결과 기록 커밋
+ea4a18c README §12 20건 분석 결과 기록 (MILESTONE 3 완료)
++ MILESTONE 4 AI 정확도 측정 커밋
 모두 origin/main 푸시
 ```
 
@@ -110,6 +112,45 @@ GET https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do
 - 50건 수집 → `inserted 49, updated 1`, 50행
 - 50건 재수집 → `updated 50`, 행 수 변화 없음
 - 인증키가 로그·테스트 리포트에 남지 않음 확인
+
+### MILESTONE 4 — AI 정확도 측정 (2026-10-23)
+
+파일:
+
+```
+evaluation/README.md            Golden Dataset 작성 가이드 (필드별 기준)
+evaluation/worksheet.md         공고 25건의 AI 입력 텍스트 (이메일·전화번호 가림)
+evaluation/golden-dataset.json  기준값 25건, labeled=true 만 평가
+```
+
+API:
+
+```
+GET /api/admin/analysis/input/{programId}       Gemini 입력 텍스트 (Gemini 호출 없음)
+GET /api/admin/evaluation?promptVersion=v1      정확도 측정 (Gemini 호출 없음)
+```
+
+결정사항:
+
+- 기준값은 **AI 입력 텍스트만** 근거로 작성 (첨부 PDF·웹페이지에만 있는 정보는 note 에만)
+- 작성 방식: AI 초안 → 사용자가 워크시트와 대조해 검토·수정 (README 에 명시)
+- 지역: 신청자의 사업장·점포·본사·주소·농지가 특정 지역이어야 하면 해당 시·도. 공고명 접두어·소관기관만으로는 X
+- 기업 형태: 개인사업자·법인·예비창업자가 명시된 경우만
+- 지원금: 기업당 최대. 1인당 금액만 있으면 null, 사업 총예산 X
+- 신청기간은 AI 가 아니라 Java 파싱 결과와 비교 (`applicationPeriod(rule)`)
+- Structured Output 성공률 분모에서 인프라 실패(503·timeout·한도) 제외
+
+결과 (v1, 평가 23건):
+
+```
+지역 20/23 · 업력 23/23 · 지원금 23/23 · 기업 형태 21/23
+주요 필드 87/92 (94.6%) · Evidence 24/24 · Structured Output 23/23 · 신청기간(규칙) 23/23
+```
+
+- 업력은 23건 모두 정답이 "없음" → 추출 능력은 측정되지 않음. 지원금도 값 있는 정답 2건뿐
+- 불일치 5건 = 지역 3(공고명 접두어를 조건으로 봄) + 기업 형태 2(명시되지 않은 형태 추론)
+  → 모두 Golden 기준이 v1 프롬프트에 없어서 생긴 해석 차이. v2 프롬프트 후보
+- 미평가 2건: id 36(PBLN_000000000127273), id 41(PBLN_000000000127268) — Gemini TIMEOUT 3회
 
 ### MILESTONE 3 — AI 실패 처리 (2026-10-22)
 
@@ -272,11 +313,12 @@ GET /api/support-programs?page=0&size=20
 
 현재 작업:
 
-없음 (MILESTONE 3 완료, MILESTONE 4 착수 전)
+없음 (MILESTONE 4 완료, MILESTONE 5 착수 전)
 
 상태:
 
-`ai_analysis` v1: COMPLETED 22건, FAILED 3건(id 36, 39 API_ERROR / id 41 RATE_LIMIT).
+`ai_analysis` v1: COMPLETED 23건, FAILED 2건(id 36, 41 TIMEOUT).
+Golden Dataset 25건 labeled.
 일괄 분석 API 를 다시 호출하면 COMPLETED 가 없는 공고(FAILED 포함)만 다시 분석한다.
 
 관련 파일:
@@ -430,15 +472,36 @@ MILESTONE 4 진행 중 실패가 계속 문제가 되면 결정한다. 지금은
 
 ---
 
+### ISSUE-009
+
+문제:
+
+Golden Dataset 25건에 업력 조건이 있는 공고가 0건, 지원금이 있는 공고가 2건이라
+업력·지원금 추출 정확도는 사실상 측정되지 않았다.
+
+다음 작업:
+
+Rule Engine(MILESTONE 6)에서 업력·지원금을 쓰기 전에, 해당 조건이 텍스트에 있는 공고를
+골라 Golden Dataset 에 추가 측정할지 결정한다. 기업마당 사업개요에 업력이 드물면 첨부 PDF 분석(§33) 근거가 된다.
+
+---
+
 ## 5. 다음 세션 작업
 
-1. MILESTONE 4 — AI 정확도 측정: Golden Dataset 대상 공고 선정과 기준값 작성 방식 결정 (사람이 직접 작성)
-2. Golden Dataset 대상 공고의 v1 분석 확보 (현재 COMPLETED 22건, 실패 3건은 재실행)
-3. ISSUE-005 (숫자 아닌 page 파라미터 메시지) 정리
+1. MILESTONE 5 — 기업 Profile (README §20.1: 지역, 기업형태, 창업일, 업종, 관심분야) 착수
+2. (선택) 프롬프트 v2: Golden 기준(공고명 접두어 ≠ 지역, 명시된 기업 형태만) 반영 후 같은 Golden 으로 재측정 — Gemini 25회 필요(일일 한도)
+3. ISSUE-009 업력·지원금 측정 표본 보강 여부 결정
 
 ---
 
 ## 6. 최근 변경사항
+
+### 2026-10-23 (MILESTONE 4)
+
+- Golden Dataset 25건 작성 (가이드·워크시트·기준값)
+- 평가 API `GET /api/admin/evaluation`, 입력 확인 API `GET /api/admin/analysis/input/{id}`
+- v1 측정: 주요 필드 94.6%, Evidence 100%, Structured Output 100% → README §14 기록
+- 테스트 91개 (실행 89, Gemini live 2 skip)
 
 ### 2026-10-22 (MILESTONE 3)
 

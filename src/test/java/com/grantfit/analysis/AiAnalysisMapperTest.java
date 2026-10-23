@@ -133,6 +133,15 @@ class AiAnalysisMapperTest {
 	}
 
 	@Test
+	void 상태별_건수를_센다() {
+		long id = aiAnalysisMapper.upsertAnalyzing(programId, "gemini-test", "v-count");
+		aiAnalysisMapper.updateFailed(id, "VALIDATION_ERROR", "x", 1);
+
+		assertThat(aiAnalysisMapper.countByStatus("v-count"))
+				.containsExactly(new AiAnalysisMapper.StatusCount("FAILED", "VALIDATION_ERROR", 1));
+	}
+
+	@Test
 	void 다른_prompt_version은_별도_행() {
 		long v1 = aiAnalysisMapper.upsertAnalyzing(programId, "gemini-test", "v1");
 		long v2 = aiAnalysisMapper.upsertAnalyzing(programId, "gemini-test", "v2");

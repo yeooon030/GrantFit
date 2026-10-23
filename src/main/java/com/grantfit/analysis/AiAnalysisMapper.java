@@ -33,6 +33,14 @@ public interface AiAnalysisMapper {
 			@Param("promptVersion") String promptVersion,
 			@Param("limit") int limit);
 
+	/**
+	 * prompt_version 별 (status, error_code) 건수. Structured Output 성공률 계산용 (README §14)
+	 */
+	List<StatusCount> countByStatus(@Param("promptVersion") String promptVersion);
+
+	record StatusCount(String status, String errorCode, int count) {
+	}
+
 	int updateFailed(
 			@Param("id") long id,
 			@Param("errorCode") String errorCode,

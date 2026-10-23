@@ -102,6 +102,15 @@
 		 LIMIT #{limit}
 	</select>
 
+	<select id="countByStatus" resultType="com.grantfit.analysis.AiAnalysisMapper$StatusCount">
+		SELECT status,
+		       error_code,
+		       count(*)::int AS count
+		  FROM ai_analysis
+		 WHERE prompt_version = #{promptVersion}
+		 GROUP BY status, error_code
+	</select>
+
 	<update id="updateFailed">
 		UPDATE ai_analysis SET
 			status        = 'FAILED',

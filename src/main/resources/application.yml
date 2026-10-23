@@ -43,6 +43,10 @@ gemini:
   batch:
     interval-millis: 1000      # 일괄 분석 시 공고 사이 간격
 
+# AI 정확도 측정 (MILESTONE 4). 경로는 실행 디렉터리(프로젝트 루트) 기준
+evaluation:
+  golden-path: evaluation/golden-dataset.json
+
 logging:
   level:
     com.grantfit: DEBUG
